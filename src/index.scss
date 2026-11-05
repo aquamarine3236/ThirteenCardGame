@@ -1,0 +1,259 @@
+$cornsilk: #f7f3dc;
+$yellow: #f4d666;
+$orange: #f7b88b;
+$darkorange: #e8775a;
+$red: #bd4a39;
+$grey: #dbd8d5;
+$darkgrey: #a6a09f;
+$darkergrey: #615b5a;
+$shadow: rgba(0, 0, 0, 0.2);
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: $cornsilk;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* placeholder classes */
+@mixin shadow {
+  box-shadow: 0.25em 0.25em 0.125em $shadow;
+}
+
+@mixin card-area {
+  border-radius: 0.5em;
+  padding: 0.5em;
+  margin: 0.5em;
+  flex-wrap: nowrap;
+  display: flex;
+  overflow: scroll;
+}
+
+%card-area {
+  @include card-area;
+  @include shadow;
+  border-radius: 0.5em;
+  padding: 0.5em;
+  margin: 0.5em;
+  min-width: 3.75em;
+  height: 5.84375em;
+}
+
+%hand {
+  @extend %card-area;
+  margin: 0.5em 0.5em 1em;
+}
+
+%player-status {
+  @include shadow;
+  border-radius: 1em;
+  padding: 0.75em;
+  text-align: center;
+  font-weight: bold;
+  font-variant: small-caps;
+  width: 6em;
+  overflow: scroll;
+}
+
+%player-area {
+  @include shadow;
+  border-radius: 1em;
+  margin: 0.5em;
+  font-weight: bold;
+  font-variant: small-caps;
+}
+
+/* card related */
+.card {
+  height: 5.84375em;
+  width: 4.25em;
+  margin: 0.2em;
+}
+
+.red-suit {
+  color: #d20000;
+}
+
+ul {
+  list-style-type: none;
+}
+
+@media screen and (max-width: 992px) {
+  .card {
+    height: 4.125em;
+    width: 3em;
+    margin: 0.1em;
+  }
+
+  %card-area {
+    @include shadow;
+    @include card-area;
+    min-width: 2.5em;
+    height: 4.125em;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .card {
+    height: 3.45em;
+    width: 2.5em;
+    margin: 0.1em;
+  }
+
+  %card-area {
+    @include shadow;
+    @include card-area;
+    min-width: 2em;
+    height: 3.45em;
+  }
+}
+
+.ghost-card {
+  opacity: 0;
+}
+
+// .selected-card {
+//   position: relative;
+//   top: -0.5em;
+// }
+
+/* board related */
+
+.center-container {
+  display: flex;
+  justify-content: center;
+}
+
+.no-shadow {
+  box-shadow: 0 0;
+}
+
+.game-area {
+  margin: 0.5em;
+}
+
+.center {
+  @extend %card-area;
+  background-color: $yellow;
+}
+
+.center-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.current-player-status {
+  @extend %player-status;
+  background-color: $darkorange;
+}
+
+.passed-player-status {
+  @extend %player-status;
+  background-color: $grey;
+}
+
+.player-status {
+  @extend %player-status;
+  background-color: $orange;
+}
+
+.current-player-area {
+  @extend %player-area;
+  background-color: $darkorange;
+}
+
+.passed-player-area {
+  @extend %player-area;
+  background-color: $grey;
+}
+
+.player-area {
+  @extend %player-area;
+  background-color: $orange;
+}
+
+/* internal player area related*/
+
+.staging-area {
+  @extend %card-area;
+  background-color: $darkorange;
+}
+
+.passed-staging-area {
+  @extend %card-area;
+  background-color: $darkgrey;
+}
+
+.current-staging-area {
+  @extend %card-area;
+  background-color: $red;
+}
+
+.hand {
+  @extend %hand;
+  background-color: $darkorange;
+}
+
+.passed-hand {
+  @extend %card-area;
+  background-color: $darkgrey;
+}
+
+.current-hand {
+  @extend %hand;
+  background-color: $red;
+}
+
+.round-type {
+  text-align: center;
+  font-weight: bold;
+  font-variant: small-caps;
+}
+
+/* button related */
+button {
+  @include shadow;
+  margin: 0.5em;
+  background-color: $cornsilk;
+  font-weight: bold;
+  font-variant: normal;
+  border-radius: 1em;
+  border: 0.25em solid $yellow;
+}
+
+.staging-area-btn {
+  font-size: 0.75em;
+  background-color: $orange;
+  border-color: $darkorange;
+}
+
+.current-staging-area-btn {
+  font-size: 0.75em;
+  background-color: $darkorange;
+  border-color: $red;
+}
+
+.tien-len {
+  background-color: $yellow;
+  border-color: $orange;
+}
+
+.disabled {
+  background-color: $grey;
+  border-color: $darkgrey;
+  color: $darkergrey;
+}
+
+.wait {
+  background-color: $darkgrey;
+  border-color: $darkergrey;
+  color: $darkergrey;
+}

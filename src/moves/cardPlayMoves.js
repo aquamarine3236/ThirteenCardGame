@@ -1,0 +1,491 @@
+import { INVALID_MOVE } from "boardgame.io/core";
+import { Combinations, Ranks } from "../constants";
+import {
+  DEFAULT_RULES,
+  FAILED_THREE_PAIR_LEAD_MULTIPLIER,
+  WHITE_WIN_MULTIPLIER,
+  openingCardLabel,
+} from "../rules";
+import { dealHand } from "../dealHand";
+import {
+  validCombination,
+  validChop,
+  compareHighest,
+  compareCards,
+} from "./helper-functions/cardComparison";
+import { unpackMove } from "./moveContext";
+const _ = require("lodash");
+
+export function validPlay(
+  stagingArea,
+  roundType,
+  center,
+  requiredOpeningCard,
+  rules = DEFAULT_RULES
+) {
+  const handType = validCombination(stagingArea);
+  if (stagingArea.length === 0 || handType === undefined) {
+    return "Invalid Combination";
+  }
+  if (
+    requiredOpeningCard &&
+    !stagingArea.some(
+      card =>
+        card.rank === requiredOpeningCard.rank &&
+        card.suit === requiredOpeningCard.suit
+    )
+  ) {
+    return `First Play Must Include ${openingCardLabel(requiredOpeningCard)}`;
+  }
+  if (roundType === Combinations.ANY || validChop(center, stagingArea, rules)) {
+    return true;
+  }
+  if (roundType !== handType || stagingArea.length !== center.length) {
+    return "Does Not Match Center";
+  }
+  if (compareHighest(stagingArea, center) !== 1) {
+    return "Does Not Beat Center";
+  }
+  return true;
+}
+
+export function tienLenPlay(contextOrG, legacyContext) {
+  const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  if (
+    G.handComplete ||
+    G.pendingThreePairLeadPlayer ||
+    ctx.activePlayers &&
+    ctx.activePlayers[ctx.currentPlayer] !== "tienLen"
+  ) {
+    return INVALID_MOVE;
+  }
+  const player = G.players[ctx.currentPlayer];
+  if (!player) return INVALID_MOVE;
+  const rules = G.rules || DEFAULT_RULES;
+  const requiredOpeningCard = G.firstMove ? rules.openingCard : null;
+  const cards = player.stagingArea;
+  if (
+    cards.length === 0 ||
+    validCombination(cards) === undefined ||
+    (requiredOpeningCard &&
+      !cards.some(
+        card =>
+          card.rank === requiredOpeningCard.rank &&
+          card.suit === requiredOpeningCard.suit
+      ))
+  ) {
+    return INVALID_MOVE;
+  }
+  return playStagingArea(G, ctx, true);
+}
+
+export function cardsToCenter(contextOrG, legacyContext) {
+  const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  if (
+    G.handComplete ||
+    G.pendingThreePairLeadPlayer ||
+    ctx.activePlayers &&
+    ["tienLen", "leadChoice"].includes(
+      ctx.activePlayers[ctx.currentPlayer]
+    )
+  ) {
+    return INVALID_MOVE;
+  }
+  const player = G.players[ctx.currentPlayer];
+  if (!player) return INVALID_MOVE;
+  const rules = G.rules || DEFAULT_RULES;
+  const requiredOpeningCard = G.firstMove ? rules.openingCard : null;
+  if (
+    validPlay(
+      player.stagingArea,
+      G.roundType,
+      G.center,
+      requiredOpeningCard,
+      rules
+    ) !== true
+  ) {
+    return INVALID_MOVE;
+  }
+  return playStagingArea(G, ctx, false);
+}
+
+function playStagingArea(G, ctx, isFreePlay) {
+  const currentPlayer = ctx.currentPlayer;
+  const player = G.players[currentPlayer];
+  const rules = G.rules || DEFAULT_RULES;
+  const cards = player.stagingArea;
+  const handType = validCombination(cards);
+  const choppedPlayer = G.centerPlayerID;
+  const chop = validChop(G.center, cards, rules);
+  const cutRound = shouldCutRound(handType, rules);
+  const continuesFreePlay =
+    isFreePlay &&
+    (chop ||
+      (handType === G.roundType &&
+        cards.length === G.center.length &&
+        compareHighest(cards, G.center) === 1));
+
+  if (
+    cards.length === 0 ||
+    handType === undefined ||
+    !Number.isInteger(G.cardsLeft[currentPlayer]) ||
+    G.cardsLeft[currentPlayer] < cards.length
+  ) {
+    return INVALID_MOVE;
+  }
+
+  if (
+    isFreePlay &&
+    (!continuesFreePlay || (chop && cutRound))
+  ) {
+    ctx.events.setStage("notTurn");
+  }
+  if (isFreePlay && !continuesFreePlay) {
+    G.turnOrder = [0, 1, 2, 3].map(x =>
+      G.winners.includes(x.toString()) ? null : x
+    );
+  }
+  if (G.openingThreePairLeadPlayer && (chop || (isFreePlay && !continuesFreePlay))) {
+    G.openingThreePairLeadPlayer = null;
+    G.openingThreePairLeadPenaltyApplied = false;
+  }
+
+  if (chop && choppedPlayer !== undefined) {
+    const chopKey = getChopKey(G.center, handType);
+    const amount = twoCardValue(G.center, rules);
+    if (amount > 0 && choppedPlayer !== currentPlayer) {
+      transfer(G, currentPlayer, choppedPlayer, amount, `chop-${chopKey}`);
+    }
+  }
+
+  if (
+    G.openingThreePairLeadPlayer &&
+    G.openingThreePairLeadPlayer === choppedPlayer &&
+    !G.openingThreePairLeadPenaltyApplied &&
+    currentPlayer !== choppedPlayer &&
+    handType === Combinations.THREEPAIR &&
+    G.roundType === Combinations.THREEPAIR &&
+    compareHighest(cards, G.center) === 1
+  ) {
+    const penalty =
+      rules.settlement.baseStake * FAILED_THREE_PAIR_LEAD_MULTIPLIER;
+    if (penalty > 0) {
+      transfer(
+        G,
+        choppedPlayer,
+        currentPlayer,
+        penalty,
+        "failed-three-pair-lead"
+      );
+    }
+    G.openingThreePairLeadPenaltyApplied = true;
+    G.openingThreePairLeadPlayer = null;
+  }
+
+  G.roundType = handType;
+  G.center = _.cloneDeep(cards).sort(compareCards);
+  G.centerPlayerID = currentPlayer;
+  player.stagingArea = [];
+  G.cardsLeft[currentPlayer] -= cards.length;
+  G.firstMove = false;
+
+  if (G.cardsLeft[currentPlayer] === 0) {
+    G.winners.push(currentPlayer);
+    G.turnOrder = G.turnOrder.map(x => (x === "W" ? null : x));
+    G.turnOrder[parseInt(currentPlayer, 10)] = "W";
+  }
+
+  if (chop && cutRound) {
+    G.openingThreePairLeadPlayer = null;
+    G.openingThreePairLeadPenaltyApplied = false;
+    G.turnOrder = [0, 1, 2, 3].map(x =>
+      G.winners.includes(x.toString()) ? null : x
+    );
+  }
+
+  if (G.winners.length >= 3 && !G.handComplete) {
+    settleGame(G, rules);
+    ctx.events.setActivePlayers({ all: "handComplete" });
+    return;
+  }
+
+  nextTurn(G, ctx);
+}
+
+export function passTurn(contextOrG, legacyContext) {
+  const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  if (
+    G.handComplete ||
+    G.pendingThreePairLeadPlayer ||
+    ctx.activePlayers &&
+    ctx.activePlayers[ctx.currentPlayer] === "tienLen"
+  ) {
+    return INVALID_MOVE;
+  }
+  const playerIndex = parseInt(ctx.currentPlayer, 10);
+  if (!G.players[ctx.currentPlayer] || !Number.isInteger(playerIndex)) {
+    return INVALID_MOVE;
+  }
+  G.turnOrder[playerIndex] = null;
+  if (
+    G.openingThreePairLeadPlayer &&
+    G.turnOrder.filter(player => player !== null).length === 1
+  ) {
+    G.openingThreePairLeadPlayer = null;
+    G.openingThreePairLeadPenaltyApplied = false;
+  }
+  nextTurn(G, ctx, false);
+}
+
+export function startNextHand(contextOrG, legacyContext) {
+  const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  const random = ctx.random || (ctx.ctx && ctx.ctx.random);
+  if (
+    !G.handComplete ||
+    !G.previousWinner ||
+    !random ||
+    typeof random.Shuffle !== "function" ||
+    typeof random.Die !== "function"
+  ) {
+    return INVALID_MOVE;
+  }
+
+  const previousWinner = G.previousWinner;
+  const { players, threeSpadesPlayer } = dealHand(random, G.rules.openingCard);
+  const leadCandidate = G.rules.chops.threePairLead
+    ? findThreePairLeadCandidate(players, Number(previousWinner))
+    : null;
+
+  G.handNumber += 1;
+  G.players = players;
+  G.cardsLeft = { 0: 13, 1: 13, 2: 13, 3: 13 };
+  G.center = [];
+  G.centerPlayerID = null;
+  G.roundType = Combinations.ANY;
+  G.winners = [];
+  G.firstPlayer = Number(previousWinner);
+  G.threeSpadesPlayer = threeSpadesPlayer;
+  G.firstMove = false;
+  G.turnOrder = [0, 1, 2, 3];
+  G.handComplete = false;
+  G.gameResults = null;
+  G.handStartBalances = { ...G.netBalances };
+  G.handSettlementLogStart = G.settlementLog.length;
+  G.pendingThreePairLeadPlayer = leadCandidate;
+  G.openingThreePairLeadPlayer = null;
+  G.openingThreePairLeadPenaltyApplied = false;
+
+  ctx.events.endTurn({ next: leadCandidate || previousWinner });
+}
+
+export function acceptThreePairLead(contextOrG, legacyContext) {
+  const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  const playerID = ctx.currentPlayer;
+  if (
+    G.handComplete ||
+    G.pendingThreePairLeadPlayer !== playerID ||
+    !G.players[playerID]
+  ) {
+    return INVALID_MOVE;
+  }
+
+  const cards = findSmallestThreePair(G.players[playerID].hand);
+  if (!cards) return INVALID_MOVE;
+
+  G.players[playerID].hand = G.players[playerID].hand.filter(
+    card => !cards.some(selected => _.isEqual(selected, card))
+  );
+  G.cardsLeft[playerID] -= cards.length;
+  G.center = cards;
+  G.centerPlayerID = playerID;
+  G.roundType = Combinations.THREEPAIR;
+  G.firstPlayer = Number(playerID);
+  G.firstMove = false;
+  G.turnOrder = [0, 1, 2, 3];
+  G.pendingThreePairLeadPlayer = null;
+  G.openingThreePairLeadPlayer = playerID;
+  G.openingThreePairLeadPenaltyApplied = false;
+
+  ctx.events.endTurn({
+    next: findNextPlayer(G.turnOrder, Number(playerID)),
+  });
+}
+
+export function declineThreePairLead(contextOrG, legacyContext) {
+  const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  const playerID = ctx.currentPlayer;
+  if (
+    G.handComplete ||
+    G.pendingThreePairLeadPlayer !== playerID ||
+    !G.previousWinner
+  ) {
+    return INVALID_MOVE;
+  }
+
+  G.pendingThreePairLeadPlayer = null;
+  G.firstPlayer = Number(G.previousWinner);
+  ctx.events.endTurn({ next: G.previousWinner });
+}
+
+function nextTurn(G, ctx) {
+  let currentPlayer = parseInt(ctx.currentPlayer, 10);
+  let nextPlayer = findNextPlayer(G.turnOrder, currentPlayer);
+  let activeSlots = G.turnOrder.filter(x => x !== null);
+  if (nextPlayer === "W" && activeSlots.length !== 1) {
+    G.turnOrder = G.turnOrder.map(x => (x === "W" ? null : x));
+    nextPlayer = findNextPlayer(G.turnOrder, currentPlayer);
+    activeSlots = G.turnOrder.filter(x => x !== null);
+  } else if (nextPlayer === "W" && activeSlots.length === 1) {
+    G.turnOrder = [0, 1, 2, 3].map(x =>
+      G.winners.includes(x.toString()) ? null : x
+    );
+    G.roundType = Combinations.ANY;
+    G.openingThreePairLeadPlayer = null;
+    G.openingThreePairLeadPenaltyApplied = false;
+    currentPlayer = parseInt(G.winners[G.winners.length - 1], 10);
+    nextPlayer = findNextPlayer(G.turnOrder, currentPlayer);
+    activeSlots = G.turnOrder.filter(x => x !== null);
+  }
+
+  ctx.events.endTurn({ next: nextPlayer });
+}
+
+function findNextPlayer(turnOrder, currentPlayer) {
+  const playerList = turnOrder
+    .slice(currentPlayer + 1, 4)
+    .concat(turnOrder.slice(0, currentPlayer + 1));
+  const next = playerList.find(i => i !== null);
+  return next === undefined ? String(currentPlayer) : next.toString();
+}
+
+function getChopKey(center, combo) {
+  if (center.length === 2) {
+    return combo === Combinations.FOUROFAKIND
+      ? "fourKindPairTwo"
+      : "fourPairPairTwo";
+  }
+  if (combo === Combinations.THREEPAIR) return "threePairSingleTwo";
+  if (combo === Combinations.FOUROFAKIND) return "fourKindSingleTwo";
+  return "fourPairSingleTwo";
+}
+
+function shouldCutRound(combo, rules) {
+  return (
+    (combo === Combinations.FOUROFAKIND && rules.chops.fourKindCutRound) ||
+    (combo === Combinations.FOURPAIR && rules.chops.fourPairCutRound)
+  );
+}
+
+function twoCardValue(cards, rules) {
+  return cards.reduce(
+    (amount, card) =>
+      amount +
+      (card.rank === "2"
+        ? rules.settlement.baseStake *
+          rules.settlement.twoCardMultipliers[card.suit]
+        : 0),
+    0
+  );
+}
+
+function transfer(G, from, to, amount, type) {
+  G.netBalances[from] -= amount;
+  G.netBalances[to] += amount;
+  G.settlementLog.push({ type, from, to, amount, handNumber: G.handNumber });
+}
+
+function settleGame(G, rules) {
+  const rankings = G.winners.concat(
+    ["0", "1", "2", "3"].filter(playerID => !G.winners.includes(playerID))
+  );
+  const { settlement } = rules;
+  const whiteWin =
+    rules.threeSpadesFirstPlaceWhiteWin &&
+    rankings[0] === String(G.threeSpadesPlayer);
+  const whiteWinMultiplier = whiteWin ? WHITE_WIN_MULTIPLIER : 1;
+  const payouts =
+    settlement.mode === "winner-vs-others"
+      ? [3, -1, -1, -1]
+      : settlement.rankPayouts;
+
+  rankings.forEach((playerID, rank) => {
+    const amount =
+      payouts[rank] * settlement.baseStake * whiteWinMultiplier;
+    G.netBalances[playerID] += amount;
+    if (amount !== 0) {
+      G.settlementLog.push({
+        type: "ranking",
+        playerID,
+        rank: rank + 1,
+        amount,
+        handNumber: G.handNumber,
+      });
+    }
+  });
+
+  const winner = rankings[0];
+  for (const playerID of rankings.slice(1)) {
+    const twos = G.players[playerID].hand.filter(card => card.rank === "2");
+    const amount = twoCardValue(twos, rules);
+    if (amount > 0) {
+      transfer(G, playerID, winner, amount, "thoi-two");
+    }
+  }
+
+  const handBalances = Object.keys(G.netBalances).reduce((balances, playerID) => {
+    balances[playerID] =
+      G.netBalances[playerID] - G.handStartBalances[playerID];
+    return balances;
+  }, {});
+  const handResult = {
+    handNumber: G.handNumber,
+    rankings,
+    whiteWin,
+    netBalances: handBalances,
+    cumulativeBalances: { ...G.netBalances },
+    settlementLog: G.settlementLog.slice(G.handSettlementLogStart),
+  };
+  G.gameResults = handResult;
+  G.handResults.push(handResult);
+  G.previousWinner = rankings[0];
+  G.handComplete = true;
+}
+
+function findThreePairLeadCandidate(players, startingPlayer) {
+  let bestCandidate = null;
+  for (const playerID of Object.keys(players)) {
+    const cards = findSmallestThreePair(players[playerID].hand);
+    if (!cards) continue;
+
+    const candidate = { playerID, cards };
+    if (
+      !bestCandidate ||
+      compareHighest(cards, bestCandidate.cards) < 0 ||
+      (compareHighest(cards, bestCandidate.cards) === 0 &&
+        clockwiseDistance(playerID, startingPlayer) <
+          clockwiseDistance(bestCandidate.playerID, startingPlayer))
+    ) {
+      bestCandidate = candidate;
+    }
+  }
+  return bestCandidate ? bestCandidate.playerID : null;
+}
+
+function findSmallestThreePair(hand) {
+  const groupedCards = _.groupBy(hand, "rank");
+  for (let start = 0; start <= Ranks.length - 3; start++) {
+    const ranks = Ranks.slice(start, start + 3);
+    if (!ranks.every(rank => groupedCards[rank] && groupedCards[rank].length >= 2)) {
+      continue;
+    }
+    const cards = ranks
+      .flatMap(rank => groupedCards[rank].slice(0, 2))
+      .sort(compareCards);
+    if (validCombination(cards) === Combinations.THREEPAIR) return cards;
+  }
+  return null;
+}
+
+function clockwiseDistance(playerID, startingPlayer) {
+  return (Number(playerID) - startingPlayer + 4) % 4;
+}

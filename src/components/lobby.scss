@@ -1,0 +1,199 @@
+/*
+ * Copyright 2018 The boardgame.io Authors.
+ *
+ * Use of this source code is governed by a MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
+$cornsilk: #f7f3dc;
+$yellow: #f4d666;
+$orange: #f7b88b;
+$darkorange: #e8775a;
+$red: #bd4a39;
+$grey: #dbd8d5;
+$darkgrey: #a6a09f;
+$darkergrey: #615b5a;
+$shadow: rgba(0, 0, 0, 0.2);
+
+#lobby-view {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+}
+
+.phase-title {
+  padding-top: 1em;
+  font-weight: bold;
+  background-color: $orange;
+  margin-bottom: 0px;
+  padding-bottom: 1em;
+  box-shadow: 0.25em 0.25em 0.125em $shadow;
+  padding-left: 0.5em;
+  border-radius: 0.5em;
+  flex-basis: 0;
+}
+
+#instances {
+  background-color: $orange;
+  border-radius: 0.5em;
+  position: relative;
+  top: -0.75em;
+  box-shadow: 0.25em 0.25em 0.125em $shadow;
+}
+
+a {
+  color: black;
+  text-decoration: none;
+  font-size: 1.5em;
+}
+
+h1 {
+  color: $red;
+  font-variant: small-caps;
+  text-align: center;
+  font-size: 2em;
+  text-shadow: 0.075em 0.075em 0.025em $shadow;
+}
+
+h2 {
+  color: $red;
+  text-shadow: 0.075em 0.075em 0.025em $shadow;
+}
+
+h3 {
+  color: $darkorange;
+  text-shadow: 0.05em 0.05em 0.025em $shadow;
+}
+
+h4 {
+  color: $darkorange;
+}
+
+.hidden {
+  display: none;
+}
+
+.phase {
+  border: none;
+  outline: none;
+}
+
+#game-creation select {
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+#game-creation span {
+  margin-right: 10px;
+}
+
+#instances td {
+  list-style: none;
+  border: 0px solid #eee;
+  border-top: none;
+  height: 2em;
+  line-height: 2em;
+  text-align: left;
+  font-size: 12px;
+  padding-left: 0.8em;
+  padding-right: 0.8em;
+}
+
+#instances table {
+  height: 100%;
+  width: 100%;
+  white-space: nowrap;
+}
+
+#instances button {
+  font-size: 12px;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: red;
+  margin-top: 0.8em;
+  display: block;
+  border-radius: 0.5em;
+}
+
+.buttons button {
+  margin-left: 10px;
+  margin-top: 10px;
+  width: 70px;
+}
+
+.custom-lobby {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.player-name,
+.custom-rules > label,
+.custom-rules fieldset > label,
+.rank-payouts label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  margin: 0.75em 0;
+}
+
+.custom-rules,
+.room-list {
+  background: $cornsilk;
+  border-radius: 0.5em;
+  box-shadow: 0.25em 0.25em 0.125em $shadow;
+  margin-top: 1em;
+  padding: 1em;
+}
+
+.custom-rules fieldset {
+  border: 1px solid $darkgrey;
+  border-radius: 0.4em;
+  margin: 1em 0;
+}
+
+.custom-rules .check-rule {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+}
+
+.custom-rules input:not([type="checkbox"]),
+.custom-rules select,
+.player-name input {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0.4em;
+}
+
+.custom-rules button,
+.room-list button {
+  cursor: pointer;
+  padding: 0.5em 0.75em;
+}
+
+.room-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.room-list li {
+  align-items: center;
+  border-bottom: 1px solid $grey;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75em;
+  justify-content: space-between;
+  padding: 0.75em 0;
+}
+
+.game-results ol {
+  padding-left: 1.5em;
+}
+
+.game-results li {
+  text-align: left;
+}
