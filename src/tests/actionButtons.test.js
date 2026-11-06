@@ -2,8 +2,11 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import PlayCardsButton from "../components/buttons/PlayCardsButton";
 import TienLenButton from "../components/buttons/TienLenButton";
+import GameArea from "../components/GameArea";
 import { DEFAULT_RULES } from "../rules";
 import { Combinations } from "../constants";
+
+jest.mock("../components/CardArea", () => () => null);
 
 function getButtonMarkup(element) {
   return renderToStaticMarkup(element);
@@ -72,5 +75,37 @@ describe("action button labels", () => {
 
     expect(invalid).toContain(">Play</button>");
     expect(ready).toContain(">Play</button>");
+  });
+});
+
+describe("game results", () => {
+  it("renders each rank once in the final results list", () => {
+    const markup = renderToStaticMarkup(
+      <GameArea
+        playerID="0"
+        ctx={{ currentPlayer: "0" }}
+        moves={{ startNextHand: jest.fn() }}
+        matchData={[{ id: 0, name: "Mây" }]}
+        G={{
+          handComplete: true,
+          gameResults: {
+            handNumber: 1,
+            rankings: ["0"],
+            netBalances: { 0: 1 },
+            cumulativeBalances: { 0: 101 },
+            whiteWin: false,
+          },
+          handResults: [],
+          winners: ["0"],
+          pendingThreePairLeadPlayer: null,
+          turnOrder: [0, null, null, null],
+          cardsLeft: { 0: 0 },
+          netBalances: { 0: 101 },
+        }}
+      />
+    );
+
+    expect(markup).toContain("<li>Mây: +1 (tổng: 101)</li>");
+    expect(markup).not.toContain("1. Mây:");
   });
 });

@@ -119,8 +119,12 @@ export function sortStagingArea(contextOrG, legacyContext) {
   ) {
     return INVALID_MOVE;
   }
-  player.hand = player.hand
-    .concat(player.stagingArea)
-    .sort((card1, card2) => compareCards(card2, card1));
+  const sortDescending = player.sortDescending === true;
+  player.hand = player.hand.concat(player.stagingArea).sort(
+    sortDescending
+      ? (card1, card2) => compareCards(card2, card1)
+      : compareCards
+  );
   player.stagingArea = [];
+  player.sortDescending = !sortDescending;
 }

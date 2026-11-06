@@ -387,7 +387,7 @@ describe("custom rules", () => {
     ]);
   });
 
-  it("returns staged cards to hand before sorting all cards high to low", () => {
+  it("returns staged cards to hand and alternates sort direction", () => {
     const G = makeState({
       players: {
         0: {
@@ -409,6 +409,11 @@ describe("custom rules", () => {
     sortStagingArea(G, makeContext("0"));
 
     expect(G.players["0"].stagingArea).toEqual([]);
+    expect(
+      G.players["0"].hand.map(card => `${card.rank}${card.suit}`)
+    ).toEqual(["3S", "4C", "AH", "2S"]);
+
+    sortStagingArea(G, makeContext("0"));
     expect(
       G.players["0"].hand.map(card => `${card.rank}${card.suit}`)
     ).toEqual(["2S", "AH", "4C", "3S"]);
