@@ -1,5 +1,5 @@
 import { INVALID_MOVE } from "boardgame.io/core";
-import { Combinations, Ranks } from "../constants";
+import { Combinations } from "../constants";
 import {
   cardsToCenter,
   passTurn,
@@ -65,40 +65,45 @@ function makeDeckWithThreePairCandidates() {
     ["S", "C"].map(suit => ({ rank, suit }))
   );
   const lowExtras = [
-    { rank: "9", suit: "S" },
-    { rank: "9", suit: "C" },
-    { rank: "J", suit: "S" },
-    { rank: "J", suit: "C" },
-    { rank: "K", suit: "S" },
-    { rank: "K", suit: "C" },
     { rank: "2", suit: "S" },
+    { rank: "8", suit: "D" },
+    { rank: "9", suit: "S" },
+    { rank: "T", suit: "S" },
+    { rank: "J", suit: "S" },
+    { rank: "K", suit: "S" },
+    { rank: "A", suit: "D" },
   ];
   const highExtras = [
-    { rank: "T", suit: "S" },
-    { rank: "T", suit: "C" },
-    { rank: "Q", suit: "S" },
-    { rank: "Q", suit: "C" },
-    { rank: "A", suit: "S" },
-    { rank: "A", suit: "C" },
     { rank: "2", suit: "C" },
+    { rank: "9", suit: "C" },
+    { rank: "T", suit: "C" },
+    { rank: "J", suit: "C" },
+    { rank: "Q", suit: "C" },
+    { rank: "K", suit: "C" },
+    { rank: "A", suit: "C" },
   ];
-  const lowerFiller = [];
-  const upperFiller = [];
-  for (const rank of Ranks) {
-    const remainingSuits =
-      rank === "2"
-        ? ["D", "H"]
-        : ["S", "C", "D", "H"].filter(
-            suit =>
-              !low.concat(lowExtras, high, highExtras).some(
-                card => card.rank === rank && card.suit === suit
-              )
-          );
-    if (remainingSuits.length === 2) {
-      lowerFiller.push({ rank, suit: remainingSuits[0] });
-      upperFiller.push({ rank, suit: remainingSuits[1] });
-    }
-  }
+  const lowerFiller = [
+    { rank: "3", suit: "D" },
+    { rank: "3", suit: "H" },
+    ...["5", "6", "7", "9", "T", "J", "K", "2"].map(rank => ({
+      rank,
+      suit: "D",
+    })),
+    { rank: "A", suit: "S" },
+    { rank: "Q", suit: "S" },
+    { rank: "Q", suit: "D" },
+  ];
+  const upperFiller = [
+    { rank: "4", suit: "D" },
+    { rank: "4", suit: "H" },
+    ...["5", "6", "7", "9", "T", "J", "K", "2"].map(rank => ({
+      rank,
+      suit: "H",
+    })),
+    { rank: "A", suit: "H" },
+    { rank: "Q", suit: "H" },
+    { rank: "8", suit: "H" },
+  ];
   return [
     low.concat(lowExtras),
     high.concat(highExtras),
@@ -111,6 +116,7 @@ describe("custom rules", () => {
   it("uses the default opening card and rejects invalid settings", () => {
     expect(normalizeRules().openingCard).toEqual({ rank: "3", suit: "S" });
     expect(normalizeRules().allowTwoAsLastCard).toBe(false);
+    expect(normalizeRules().thoiTwoEnabled).toBe(true);
     expect(normalizeRules().settlement.baseStake).toBe(1);
     expect(normalizeRules().chops.threePairSingleTwo).toBe(true);
     expect(normalizeRules().chops.threePairLead).toBe(true);
@@ -124,6 +130,18 @@ describe("custom rules", () => {
         allowTwoAsLastCard: true,
       }).allowTwoAsLastCard
     ).toBe(true);
+    expect(
+      normalizeRules({
+        ...DEFAULT_RULES,
+        thoiTwoEnabled: false,
+      }).thoiTwoEnabled
+    ).toBe(false);
+    const previousRules = { ...DEFAULT_RULES };
+    delete previousRules.thoiTwoEnabled;
+    expect(normalizeRules(previousRules).thoiTwoEnabled).toBe(true);
+    expect(() =>
+      normalizeRules({ ...DEFAULT_RULES, thoiTwoEnabled: "yes" })
+    ).toThrow("thối 2");
     expect(() =>
       normalizeRules({
         ...DEFAULT_RULES,
@@ -479,6 +497,7 @@ describe("custom rules", () => {
     expect(G.netBalances).toEqual(G.gameResults.cumulativeBalances);
     expect(G.handComplete).toBe(true);
     expect(G.handResults).toHaveLength(1);
+    expect(G.gameResults.lastPlacePlayerIDs).toEqual(["3"]);
   });
 
   it("counts a white win only when the first-place player finishes with the single 3 of spades", () => {

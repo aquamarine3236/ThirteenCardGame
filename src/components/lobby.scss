@@ -36,6 +36,7 @@
 
   h2 {
     color: $burnt-red;
+    font-size: 1.25rem;
   }
 
   ul {
@@ -49,7 +50,7 @@
   width: 100%;
   margin: $space-lg 0;
   padding: $space-md;
-  font-size: 1.1em;
+  font-size: 1em;
 }
 
 .room-actions {
@@ -84,11 +85,12 @@ a {
 h1 {
   font-family: $font-display;
   color: $gold;
-  font-variant: small-caps;
+  font-variant: normal;
   text-align: center;
-  font-size: 2.25em;
+  font-size: clamp(1.75rem, 4vw, 2.125rem);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
   margin: 0 0 $space-lg;
   text-shadow: none;
 }
@@ -96,8 +98,10 @@ h1 {
 h2 {
   font-family: $font-display;
   color: $gold;
+  font-size: 1.25rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
   text-shadow: none;
   margin-top: 0;
 }
@@ -105,6 +109,7 @@ h2 {
 h3 {
   font-family: $font-display;
   color: $amber;
+  font-size: 1.1rem;
   font-weight: 600;
   text-shadow: none;
 }
@@ -112,6 +117,7 @@ h3 {
 h4 {
   font-family: $font-display;
   color: $amber;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -154,6 +160,11 @@ h4 {
   padding: $space-lg;
 }
 
+.custom-rules h2,
+.room-list h2 {
+  color: $burnt-red;
+}
+
 .custom-rules fieldset {
   border: $border-thin $olive;
   border-radius: $radius;
@@ -185,7 +196,7 @@ h4 {
 
 .custom-rules legend {
   font-family: $font-display;
-  font-weight: 600;
+  font-weight: 500;
   color: $burnt-red;
   padding: 0 $space-xs;
 }
@@ -364,7 +375,7 @@ h4 {
     padding: $space-lg;
   }
 
-  h1 {
-    font-size: 1.75em;
+  .custom-lobby h1 {
+    font-size: 1.75rem;
   }
 }

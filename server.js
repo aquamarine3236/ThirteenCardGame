@@ -8,6 +8,7 @@ import koaBody from "koa-body";
 import { Master } from "boardgame.io/master";
 import { default as TienLen } from "./src/TienLen";
 import { dealHand } from "./src/dealHand";
+import { finishWhiteWin } from "./src/moves/cardPlayMoves";
 import { Combinations, TURN_TIMEOUT_MS } from "./src/constants";
 
 const PORT = process.env.PORT || 8000;
@@ -165,6 +166,7 @@ server.router.post("/games/:name/:id/start", koaBody(), async ctx => {
     players: dealtPlayers,
     firstPlayer,
     threeSpadesPlayer,
+    whiteWinPlayer,
   } = dealHand(secureRandom(), rules.openingCard, activePlayerIDs);
   state.G.players = Object.keys(metadata.players).reduce((players, id) => {
     players[id] = dealtPlayers[id] || { hand: [], stagingArea: [] };
@@ -217,6 +219,18 @@ server.router.post("/games/:name/:id/start", koaBody(), async ctx => {
     },
     {}
   );
+  if (whiteWinPlayer !== null) {
+    finishWhiteWin(state.G, whiteWinPlayer, firstPlayer);
+    state.ctx.activePlayers = Object.keys(state.G.players).reduce(
+      (activePlayers, id) => {
+        activePlayers[id] = activePlayerIDs.includes(id)
+          ? "handComplete"
+          : null;
+        return activePlayers;
+      },
+      {}
+    );
+  }
   state._stateID += 1;
   metadata.started = true;
   metadata.startedAt = startedAt;

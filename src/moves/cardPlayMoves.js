@@ -6,7 +6,7 @@ import {
   WHITE_WIN_MULTIPLIER,
   openingCardLabel,
 } from "../rules";
-import { dealHand } from "../dealHand";
+import { dealHand, findWhiteWinPlayer } from "../dealHand";
 import {
   validCombination,
   validChop,
@@ -362,12 +362,18 @@ export function startNextHand(contextOrG, legacyContext) {
   }
 
   const previousWinner = G.previousWinner;
+  const previousHandWasWhiteWin =
+    G.gameResults && G.gameResults.whiteWin === true;
   const activePlayerIDs = getActivePlayerIDs(G);
-  const { players: dealtPlayers, threeSpadesPlayer } = dealHand(
-    random,
-    G.rules.openingCard,
-    activePlayerIDs
-  );
+  const {
+    players: dealtPlayers,
+    firstPlayer: openingCardPlayer,
+    threeSpadesPlayer,
+    whiteWinPlayer,
+  } = dealHand(random, G.rules.openingCard, activePlayerIDs);
+  const nextStartingPlayer = previousHandWasWhiteWin
+    ? String(openingCardPlayer)
+    : previousWinner;
   const players = activePlayerIDs.reduce((allPlayers, playerID) => {
     allPlayers[playerID] = dealtPlayers[playerID];
     return allPlayers;
@@ -376,7 +382,7 @@ export function startNextHand(contextOrG, legacyContext) {
   for (const playerID of allPlayerIDs) {
     if (!players[playerID]) players[playerID] = { hand: [], stagingArea: [] };
   }
-  const leadCandidate = G.rules.chops.threePairLead
+  const leadCandidate = !previousHandWasWhiteWin && G.rules.chops.threePairLead
     ? findThreePairLeadCandidate(players, Number(previousWinner))
     : null;
 
@@ -391,7 +397,7 @@ export function startNextHand(contextOrG, legacyContext) {
   G.roundType = Combinations.ANY;
   G.winners = [];
   G.firstWinnerFinishedWithThreeSpades = false;
-  G.firstPlayer = Number(previousWinner);
+  G.firstPlayer = Number(nextStartingPlayer);
   G.threeSpadesPlayer = threeSpadesPlayer;
   G.firstMove = false;
   G.turnOrder = makeTurnOrder(G);
@@ -405,7 +411,33 @@ export function startNextHand(contextOrG, legacyContext) {
   G.chopChain = null;
   G.twoCardPot = 0;
 
-  ctx.events.endTurn({ next: leadCandidate || previousWinner });
+  if (whiteWinPlayer !== null) {
+    const winner = findWhiteWinPlayer(
+      players,
+      activePlayerIDs,
+      openingCardPlayer
+    );
+    finishWhiteWin(G, winner, openingCardPlayer);
+    ctx.events.endTurn({ next: nextStartingPlayer });
+  } else {
+    ctx.events.endTurn({ next: leadCandidate || nextStartingPlayer });
+  }
+}
+
+export function finishWhiteWin(G, playerID, openingCardPlayer = G.firstPlayer) {
+  const winner = String(playerID);
+  if (
+    G.handComplete ||
+    !G.players[winner] ||
+    !isActivePlayer(G, winner)
+  ) {
+    throw new Error("Cannot finish an invalid white-win hand.");
+  }
+
+  G.winners = [winner];
+  G.firstWinnerFinishedWithThreeSpades = false;
+  settleGame(G, G.rules || DEFAULT_RULES, winner);
+  G.previousWinner = String(openingCardPlayer);
 }
 
 export function acceptThreePairLead(contextOrG, legacyContext) {
@@ -600,19 +632,43 @@ function settleChopChain(G) {
   }
 }
 
-function settleGame(G, rules) {
+function settleGame(G, rules, whiteWinPlayerID = null) {
   settleChopChain(G);
   const activePlayerIDs = getActivePlayerIDs(G);
-  const rankings = G.winners.concat(
-    activePlayerIDs.filter(playerID => !G.winners.includes(playerID))
+  const whiteWinAtDeal = whiteWinPlayerID !== null;
+  const nonWinners = activePlayerIDs.filter(
+    playerID => !G.winners.includes(playerID)
   );
+  const playedPlayers = nonWinners.filter(
+    playerID => G.cardsLeft[playerID] !== 13
+  );
+  const burnedPlayers = nonWinners.filter(
+    playerID => G.cardsLeft[playerID] === 13
+  );
+  const rankings = whiteWinAtDeal
+    ? [String(whiteWinPlayerID)].concat(
+        activePlayerIDs.filter(playerID => playerID !== String(whiteWinPlayerID))
+      )
+    : G.winners.concat(playedPlayers, burnedPlayers);
   const { settlement } = rules;
   const whiteWin =
-    rules.threeSpadesFirstPlaceWhiteWin &&
-    G.firstWinnerFinishedWithThreeSpades;
-  const whiteWinMultiplier = whiteWin ? WHITE_WIN_MULTIPLIER : 1;
+    whiteWinAtDeal ||
+    (rules.threeSpadesFirstPlaceWhiteWin &&
+      G.firstWinnerFinishedWithThreeSpades);
+  const whiteWinMultiplier =
+    !whiteWinAtDeal && whiteWin
+      ? WHITE_WIN_MULTIPLIER
+      : 1;
   let payouts;
-  if (settlement.mode === "winner-vs-others") {
+  if (whiteWinAtDeal) {
+    const perLoserPayout =
+      settlement.mode === "ranked"
+        ? settlement.rankPayouts[settlement.rankPayouts.length - 1]
+        : -1;
+    payouts = [-(activePlayerIDs.length - 1) * perLoserPayout].concat(
+      Array(activePlayerIDs.length - 1).fill(perLoserPayout)
+    );
+  } else if (settlement.mode === "winner-vs-others") {
     payouts = [activePlayerIDs.length - 1].concat(
       Array(activePlayerIDs.length - 1).fill(-1)
     );
@@ -628,7 +684,10 @@ function settleGame(G, rules) {
       G.settlementLog.push({
         type: "ranking",
         playerID,
-        rank: rank + 1,
+        rank:
+          whiteWinAtDeal && rank > 0
+            ? activePlayerIDs.length
+            : rank + 1,
         amount,
         handNumber: G.handNumber,
       });
@@ -636,11 +695,20 @@ function settleGame(G, rules) {
   });
 
   const winner = rankings[0];
-  for (const playerID of rankings.slice(1)) {
-    const twos = G.players[playerID].hand.filter(card => card.rank === "2");
-    const amount = twoCardValue(twos, rules);
-    if (amount > 0) {
-      transfer(G, playerID, winner, amount, "thoi-two");
+  const lastPlacePlayerIDs = whiteWinAtDeal
+    ? rankings.slice(1)
+    : [...new Set([rankings[rankings.length - 1], ...burnedPlayers])].filter(
+        Boolean
+      );
+  if (rules.thoiTwoEnabled !== false) {
+    for (const playerID of lastPlacePlayerIDs) {
+      const twos = G.players[playerID].hand
+        .concat(G.players[playerID].stagingArea)
+        .filter(card => card.rank === "2");
+      const amount = twoCardValue(twos, rules);
+      if (amount > 0) {
+        transfer(G, playerID, winner, amount, "thoi-two");
+      }
     }
   }
 
@@ -652,6 +720,7 @@ function settleGame(G, rules) {
   const handResult = {
     handNumber: G.handNumber,
     rankings,
+    lastPlacePlayerIDs,
     whiteWin,
     netBalances: handBalances,
     cumulativeBalances: { ...G.netBalances },

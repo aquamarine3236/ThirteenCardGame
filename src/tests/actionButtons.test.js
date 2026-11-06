@@ -105,7 +105,7 @@ describe("game results", () => {
       />
     );
 
-    expect(markup).toContain("<li>Mây: +1 (tổng: 101)</li>");
+    expect(markup).toContain("<li>Hạng 1: Mây: +1 (tổng: 101)</li>");
     expect(markup).not.toContain("1. Mây:");
   });
 });

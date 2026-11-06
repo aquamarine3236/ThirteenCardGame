@@ -4,7 +4,7 @@ body {
   margin: 0;
   font-family: $font-body;
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: $on-dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -12,8 +12,7 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
 h1,
@@ -21,8 +20,9 @@ h2,
 h3,
 h4 {
   font-family: $font-display;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
   color: $gold;
 }
 
@@ -44,10 +44,10 @@ h4 {
   border: $border-thick $gold;
   padding: $space-md;
   text-align: center;
-  font-weight: 600;
-  font-variant: small-caps;
-  font-family: $font-display;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  font-variant: normal;
+  font-family: $font-body;
+  letter-spacing: normal;
   width: 6.5em;
   overflow: auto;
   color: $on-dark;
@@ -59,8 +59,8 @@ h4 {
   border: $border-thick $gold;
   margin: $space-sm;
   padding: $space-sm 0;
-  font-weight: 600;
-  font-variant: small-caps;
+  font-weight: 500;
+  font-variant: normal;
   box-shadow: none;
 }
 
@@ -333,10 +333,10 @@ ul {
 
 .round-type {
   text-align: center;
-  font-weight: 600;
-  font-variant: small-caps;
-  font-family: $font-display;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  font-variant: normal;
+  font-family: $font-body;
+  letter-spacing: normal;
   color: $gold;
   padding: $space-sm;
 }
@@ -404,8 +404,8 @@ button {
   border-color: $amber;
   color: $ink;
   font-family: $font-display;
-  font-size: 1.1em;
-  letter-spacing: 0.06em;
+  font-size: 1em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 
   a {

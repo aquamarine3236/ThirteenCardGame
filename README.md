@@ -47,6 +47,7 @@ mỗi ván mới; người về nhất ván trước thường được mở vá
 |---|---|---|
 | Lá mở đầu | 3♠ | Chọn một trong bốn lá 3. Người giữ lá đó đi đầu và phải đánh nó ở lượt đầu ván đầu tiên. |
 | Thắng trắng 3♠ | Tắt | Nếu bật, người về nhất phải đánh riêng lá 3♠ làm lá cuối cùng để hết bài; phần kết toán theo thứ hạng của ván đó được nhân đôi. |
+| Thối 2 | Bật | Khi người chơi về bét hoặc cháy bài, mỗi lá 2 còn trên tay bị phạt theo hệ số chất và trả cho người về nhất. |
 | Đánh 2 khi hết bài | Tắt | Nếu bật, người chơi được phép đánh lá 2 (kể cả đôi 2) ở nước làm hết bài. |
 | 3 đôi thông chặt 2 | Tắt | Cho phép 3 đôi thông chặt một lá 2. |
 | 3 đôi thông mở đầu ván sau | Bật | Ở ván kế tiếp, người có bộ 3 đôi thông nhỏ nhất có thể chọn đánh bộ đó để mở đầu thay vì người về nhất ván trước. |
@@ -64,10 +65,18 @@ mỗi ván mới; người về nhất ván trước thường được mở vá
 nguyên trong khoảng -1000 đến 1000 và có tổng bằng 0. Với phòng ít hơn 4
 người, các hệ số được cân bằng lại cho số người thực tế.
 
+Khi chia bài, tứ quý 2, 6 đôi hoặc sảnh đủ từ 3 đến 2 thắng trắng ngay; người
+đó về nhất và những người còn lại đồng hạng bét. Nếu nhiều người cùng đủ điều
+kiện, người được quyền đi đầu ván được ưu tiên. Trong phòng 4 người, người
+thắng nhận 3 lần mức phạt của hạng bét (ví dụ hạng bét -3 thì người thắng
+nhận +9). Sau thắng trắng, ván kế tiếp bắt đầu từ người giữ lá 3 mở đầu đã
+chọn; các ván bình thường bắt đầu từ người về nhất. Thắng trắng sau khi chia
+không nhân đôi theo tùy chọn thắng trắng 3♠.
+
 Khi chặt 2, người chặt trả giá trị của lá 2 cho người đang giữ tổ hợp ở giữa;
-nếu chặt đôi 2 thì cộng giá trị của cả hai lá. Khi kết thúc ván, các lá 2 còn
-trên tay người chơi chưa về nhất được tính là thối và trả tổng giá trị cho
-người về nhất. Các khoản này được tính riêng với kết toán thứ hạng.
+nếu chặt đôi 2 thì cộng giá trị của cả hai lá. Khi bật luật thối 2, chỉ người
+về bét hoặc cháy bài bị phạt các lá 2 còn trên tay; tiền được trả cho người về
+nhất. Các khoản này được tính riêng với kết toán thứ hạng.
 
 Thiết lập được máy chủ kiểm tra và giữ cố định trong trận. Chip chỉ là điểm
 trong ứng dụng, không phải tiền thật.

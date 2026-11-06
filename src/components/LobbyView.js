@@ -311,6 +311,20 @@ function LobbyHome({
         </fieldset>
 
         <fieldset>
+          <legend>Thối 2</legend>
+          <RuleCheckbox
+            checked={rules.thoiTwoEnabled}
+            label="Phạt từng lá 2 còn lại của người về bét hoặc cháy bài"
+            onChange={checked =>
+              setRules({ ...rules, thoiTwoEnabled: checked })
+            }
+          />
+          <small>
+            Tiền phạt theo giá trị từng lá 2 được chuyển cho người về nhất.
+          </small>
+        </fieldset>
+
+        <fieldset>
           <legend>3 đôi thông</legend>
           <RuleCheckbox
             checked={rules.chops.threePairSingleTwo}

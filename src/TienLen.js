@@ -11,6 +11,7 @@ import {
   acceptThreePairLead,
   declineThreePairLead,
   timeoutTurn,
+  finishWhiteWin,
 } from "./moves/cardPlayMoves";
 import {
   relocateCards,
@@ -47,7 +48,9 @@ const TienLen = {
   turn: {
     onBegin: ({ G, events }) => {
       G.turnDeadlineAt = Date.now() + TURN_TIMEOUT_MS;
-      if (G.turnOrder.filter(player => player !== null).length === 1) {
+      if (G.handComplete) {
+        events.setActivePlayers({ all: "handComplete" });
+      } else if (G.turnOrder.filter(player => player !== null).length === 1) {
         events.setActivePlayers({
           currentPlayer: { stage: "tienLen" },
           others: { stage: "notTurn" },
@@ -94,7 +97,7 @@ function setUp(ctx, setupData) {
     return balances;
   }, {});
 
-  return {
+  const G = {
     turnOrder: [0, 1, 2, 3].map(playerID =>
       activePlayerIDs.includes(String(playerID)) ? playerID : null
     ),
@@ -129,6 +132,15 @@ function setUp(ctx, setupData) {
     twoCardPot: 0,
     turnDeadlineAt: Date.now() + TURN_TIMEOUT_MS,
   };
+
+  if (!roomMode && dealtHand.whiteWinPlayer !== null) {
+    finishWhiteWin(
+      G,
+      dealtHand.whiteWinPlayer,
+      dealtHand.firstPlayer
+    );
+  }
+  return G;
 }
 
 function validateSetupData(setupData) {

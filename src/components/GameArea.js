@@ -29,7 +29,7 @@ export default class GameArea extends Component {
             <strong>Ván {this.props.G.gameResults.handNumber} kết thúc</strong>
             {this.props.G.gameResults && (
               <ol>
-                {this.props.G.gameResults.rankings.map(playerID => {
+                {this.props.G.gameResults.rankings.map((playerID, rank) => {
                   const metadata = _.find(matchData, {
                     id: parseInt(playerID, 10),
                   });
@@ -37,9 +37,15 @@ export default class GameArea extends Component {
                     this.props.G.gameResults.netBalances[playerID];
                   const cumulative =
                     this.props.G.gameResults.cumulativeBalances[playerID];
+                  const isLastPlace =
+                    this.props.G.gameResults.lastPlacePlayerIDs &&
+                    this.props.G.gameResults.lastPlacePlayerIDs.includes(
+                      playerID
+                    );
                   return (
                     <li key={playerID}>
-                    {metadata ? metadata.name : playerID}:{" "}
+                      {isLastPlace ? "Về bét: " : `Hạng ${rank + 1}: `}
+                      {metadata ? metadata.name : playerID}:{" "}
                       {amount > 0 ? "+" : ""}
                       {amount} (tổng: {cumulative})
                     </li>
@@ -60,9 +66,12 @@ export default class GameArea extends Component {
                         id: parseInt(resultPlayerID, 10),
                       });
                       const amount = result.netBalances[resultPlayerID];
+                      const isLastPlace =
+                        result.lastPlacePlayerIDs &&
+                        result.lastPlacePlayerIDs.includes(resultPlayerID);
                       return (
                         <span key={resultPlayerID}>
-                          {rank + 1}.{" "}
+                          {isLastPlace ? "Bét: " : `${rank + 1}. `}
                           {resultPlayer ? resultPlayer.name : resultPlayerID}{" "}
                           {amount > 0 ? "+" : ""}
                           {amount}

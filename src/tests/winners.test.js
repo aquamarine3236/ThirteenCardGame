@@ -18,6 +18,11 @@ describe("winners", () => {
     });
     attachCurrentPlayerMoves(client);
     updateClientState(client, (G, ctx) => {
+      G.activePlayerIDs = ["0", "1", "2", "3"];
+      G.handComplete = false;
+      G.gameResults = null;
+      G.winners = [];
+      G.turnOrder = [0, 1, 2, 3];
       G.players = {
       "0": {
         hand: [
@@ -39,6 +44,12 @@ describe("winners", () => {
         stagingArea: [],
       },
       };
+      G.firstWinnerFinishedWithThreeSpades = false;
+      G.handResults = [];
+      G.netBalances = { 0: 100, 1: 100, 2: 100, 3: 100 };
+      G.handStartBalances = { ...G.netBalances };
+      G.settlementLog = [];
+      G.handSettlementLogStart = 0;
       G.cardsLeft = {
         "0": 2,
         "1": 1,
@@ -46,7 +57,15 @@ describe("winners", () => {
         "3": 1,
       };
       G.firstMove = false;
+      G.chopChain = null;
+      G.twoCardPot = 0;
       ctx.currentPlayer = "0";
+      ctx.activePlayers = {
+        "0": null,
+        "1": "notTurn",
+        "2": "notTurn",
+        "3": "notTurn",
+      };
     });
     G = client.store.getState()["G"];
   });
@@ -106,6 +125,11 @@ describe("winners", () => {
       });
       attachCurrentPlayerMoves(client);
       updateClientState(client, (G, ctx) => {
+        G.activePlayerIDs = ["0", "1", "2", "3"];
+        G.handComplete = false;
+        G.gameResults = null;
+        G.winners = [];
+        G.turnOrder = [0, 1, 2, 3];
         G.players = {
         "0": {
           hand: [
@@ -131,6 +155,12 @@ describe("winners", () => {
           stagingArea: [],
         },
         };
+        G.firstWinnerFinishedWithThreeSpades = false;
+        G.handResults = [];
+        G.netBalances = { 0: 100, 1: 100, 2: 100, 3: 100 };
+        G.handStartBalances = { ...G.netBalances };
+        G.settlementLog = [];
+        G.handSettlementLogStart = 0;
         G.cardsLeft = {
           "0": 3,
           "1": 1,
@@ -138,7 +168,15 @@ describe("winners", () => {
           "3": 2,
         };
         G.firstMove = false;
+        G.chopChain = null;
+        G.twoCardPot = 0;
         ctx.currentPlayer = "0";
+        ctx.activePlayers = {
+          "0": null,
+          "1": "notTurn",
+          "2": "notTurn",
+          "3": "notTurn",
+        };
       });
       G = client.store.getState()["G"];
       ctx = client.store.getState()["ctx"];
@@ -202,11 +240,15 @@ describe("winners", () => {
       client.moves.startNextHand();
       G = client.store.getState()["G"];
       expect(G.handNumber).toBe(2);
-      expect(G.handComplete).toBe(false);
-      expect(G.winners).toEqual([]);
       expect(Object.values(G.cardsLeft)).toEqual([13, 13, 13, 13]);
-      expect(G.netBalances).toEqual(previousBalances);
-      expect(G.handResults).toHaveLength(1);
+      expect(Boolean(G.gameResults && G.gameResults.whiteWin)).toBe(
+        G.handComplete
+      );
+      expect(G.winners).toHaveLength(G.handComplete ? 1 : 0);
+      expect(G.netBalances).toEqual(
+        G.handComplete ? G.gameResults.cumulativeBalances : previousBalances
+      );
+      expect(G.handResults).toHaveLength(G.handComplete ? 2 : 1);
     });
 
     it("should pass to the next player on if no clear next player", () => {

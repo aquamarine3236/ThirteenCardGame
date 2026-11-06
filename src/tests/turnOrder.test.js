@@ -18,6 +18,19 @@ describe("Turn order", () => {
     });
     attachCurrentPlayerMoves(client);
     updateClientState(client, (G, ctx) => {
+      G.activePlayerIDs = ["0", "1", "2", "3"];
+      G.handComplete = false;
+      G.gameResults = null;
+      G.handResults = [];
+      G.winners = [];
+      G.turnOrder = [0, 1, 2, 3];
+      G.firstWinnerFinishedWithThreeSpades = false;
+      G.netBalances = { 0: 100, 1: 100, 2: 100, 3: 100 };
+      G.handStartBalances = { ...G.netBalances };
+      G.settlementLog = [];
+      G.handSettlementLogStart = 0;
+      G.chopChain = null;
+      G.twoCardPot = 0;
       G.firstMove = false;
       G.players = {
       0: {
@@ -61,6 +74,12 @@ describe("Turn order", () => {
       };
       G.cardsLeft = { 0: 4, 1: 4, 2: 6, 3: 4 };
       ctx.currentPlayer = "0";
+      ctx.activePlayers = {
+        "0": null,
+        "1": "notTurn",
+        "2": "notTurn",
+        "3": "notTurn",
+      };
     });
   });
 

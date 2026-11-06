@@ -4,6 +4,7 @@ export const DEFAULT_RULES = {
   openingCard: { rank: "3", suit: "S" },
   threeSpadesFirstPlaceWhiteWin: false,
   allowTwoAsLastCard: false,
+  thoiTwoEnabled: true,
   chops: {
     threePairSingleTwo: true,
     threePairLead: true,
@@ -51,11 +52,30 @@ export function normalizeRules(value) {
   }
   if (value === null) throw new Error("Custom rules must be an object.");
 
-  if (!hasExactKeys(value, Object.keys(DEFAULT_RULES))) {
+  const requiredKeys = Object.keys(DEFAULT_RULES).filter(
+    key => key !== "thoiTwoEnabled"
+  );
+  if (
+    !isPlainObject(value) ||
+    requiredKeys.some(key => !Object.prototype.hasOwnProperty.call(value, key)) ||
+    Object.keys(value).some(key => !Object.prototype.hasOwnProperty.call(DEFAULT_RULES, key))
+  ) {
     throw new Error("Invalid custom rules.");
   }
 
-  const { openingCard, chops, settlement } = value;
+  const normalizedValue = {
+    ...DEFAULT_RULES,
+    ...value,
+    thoiTwoEnabled:
+      value.thoiTwoEnabled === undefined
+        ? DEFAULT_RULES.thoiTwoEnabled
+        : value.thoiTwoEnabled,
+  };
+  if (typeof normalizedValue.thoiTwoEnabled !== "boolean") {
+    throw new Error("Invalid thối 2 rule.");
+  }
+
+  const { openingCard, chops, settlement } = normalizedValue;
   if (
     !isPlainObject(openingCard) ||
     !hasExactKeys(openingCard, ["rank", "suit"]) ||
@@ -66,8 +86,8 @@ export function normalizeRules(value) {
   }
 
   if (
-    typeof value.threeSpadesFirstPlaceWhiteWin !== "boolean" ||
-    typeof value.allowTwoAsLastCard !== "boolean" ||
+    typeof normalizedValue.threeSpadesFirstPlaceWhiteWin !== "boolean" ||
+    typeof normalizedValue.allowTwoAsLastCard !== "boolean" ||
     !hasExactKeys(chops, [
       "threePairSingleTwo",
       "threePairLead",
@@ -106,7 +126,7 @@ export function normalizeRules(value) {
     throw new Error("Invalid virtual settlement settings.");
   }
 
-  return JSON.parse(JSON.stringify(value));
+  return JSON.parse(JSON.stringify(normalizedValue));
 }
 
 export function openingCardLabel(card) {

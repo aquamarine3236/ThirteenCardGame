@@ -69,7 +69,10 @@ describe("room participation and card selection", () => {
   it("keeps a room unstarted and prevents card moves before the host starts it", () => {
     const before = TienLen.setup(
       { numPlayers: 4, random: deterministicRandom },
-      { rules: normalizeRules(), roomMode: true }
+      {
+        rules: normalizeRules({ ...DEFAULT_RULES, thoiTwoEnabled: false }),
+        roomMode: true,
+      }
     );
     expect(
       relocateCards(
@@ -81,6 +84,7 @@ describe("room participation and card selection", () => {
     ).toBe(INVALID_MOVE);
 
     expect(before.started).toBe(false);
+    expect(before.rules.thoiTwoEnabled).toBe(false);
     expect(before.activePlayerIDs).toEqual([]);
     expect(Object.values(before.players).every(player => player.hand.length === 0)).toBe(
       true

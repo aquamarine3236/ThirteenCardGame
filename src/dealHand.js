@@ -76,5 +76,45 @@ export function dealHand(random, openingCard, playerIDs = [0, 1, 2, 3]) {
     players[activePlayerIDs[playerID]] = { hand, stagingArea: [] };
   });
 
-  return { players, firstPlayer, threeSpadesPlayer };
+  const whiteWinPlayer = findWhiteWinPlayer(
+    players,
+    activePlayerIDs,
+    firstPlayer
+  );
+  return { players, firstPlayer, threeSpadesPlayer, whiteWinPlayer };
+}
+
+export function findWhiteWinPlayer(players, playerIDs, tieBreakPlayer) {
+  const activePlayerIDs = playerIDs.map(String);
+  const tieBreakIndex = activePlayerIDs.indexOf(String(tieBreakPlayer));
+  const orderedPlayerIDs =
+    tieBreakIndex < 0
+      ? activePlayerIDs
+      : activePlayerIDs
+          .slice(tieBreakIndex)
+          .concat(activePlayerIDs.slice(0, tieBreakIndex));
+
+  return (
+    orderedPlayerIDs.find(playerID =>
+      isWhiteWinHand(players[playerID] && players[playerID].hand)
+    ) || null
+  );
+}
+
+function isWhiteWinHand(hand) {
+  if (!Array.isArray(hand) || hand.length !== 13) return false;
+
+  if (hand.filter(card => card.rank === "2").length === 4) return true;
+
+  const rankCounts = hand.reduce((counts, card) => {
+    counts[card.rank] = (counts[card.rank] || 0) + 1;
+    return counts;
+  }, {});
+  const pairCount = Object.values(rankCounts).reduce(
+    (count, rankCount) => count + Math.floor(rankCount / 2),
+    0
+  );
+  if (pairCount >= 6) return true;
+
+  return Ranks.every(rank => rankCounts[rank] === 1);
 }

@@ -113,9 +113,19 @@ export default function Rules() {
       <h2>Kết thúc ván và tính điểm</h2>
       <p>
         Người đánh hết bài được xếp hạng theo thứ tự về. Ván kết thúc khi chỉ
-        còn một người chưa hết bài; người đó xếp cuối. Sau khi hiện kết quả,
-        người chơi có thể bắt đầu ván kế tiếp. Điểm số được cộng dồn trong
-        trận.
+        còn một người chưa hết bài; người đó xếp cuối. Người chưa đánh lá nào
+        cũng bị xếp cuối. Sau khi hiện kết quả, người chơi có thể bắt đầu ván
+        kế tiếp. Điểm số được cộng dồn trong trận.
+      </p>
+      <p>
+        Ngay sau khi chia, người có tứ quý 2, 6 đôi hoặc đủ sảnh từ 3 đến 2
+        thắng trắng: người đó về nhất, những người còn lại đồng hạng bét và
+        ván kết thúc. Nếu nhiều người cùng đủ điều kiện, người được quyền đi
+        đầu ván được ưu tiên. Trong phòng 4 người, người thắng nhận 3 lần
+        mức phạt của hạng bét; ví dụ hạng bét -3 thì người thắng nhận +9. Sau
+        thắng trắng, ván kế tiếp bắt đầu từ người giữ lá 3 mở đầu đã chọn. Các
+        ván bình thường bắt đầu từ người về nhất. Thắng trắng sau khi chia
+        không nhân đôi theo tùy chọn thắng trắng 3♠.
       </p>
       <p>
         Chủ phòng có thể chọn có cho phép đánh lá 2 (kể cả đôi 2) ở nước đi
@@ -140,8 +150,8 @@ export default function Rules() {
           chuyển một lần khi chuỗi chặt kết thúc.
         </li>
         <li>
-          Khi ván kết thúc, các lá 2 còn trên tay những người chưa về nhất bị
-          tính thối; tổng giá trị được trả cho người về nhất. Mỗi lá 2 có hệ
+          Khi bật luật thối 2 (mặc định), mỗi lá 2 còn trên tay người về bét
+          hoặc cháy bài bị phạt riêng và trả cho người về nhất. Mỗi lá 2 có hệ
           số riêng; mặc định 2♠ = 1x, 2♣ = 2x, 2♦ = 3x, 2♥ = 4x tiền cược cơ
           sở.
         </li>

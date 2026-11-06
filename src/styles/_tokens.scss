@@ -12,8 +12,8 @@ $passed: #6b6660;
 $passed-surface: #c4bfb5;
 $on-dark: #e9e4d8;
 
-$font-display: "Cormorant Garamond", "Times New Roman", serif;
-$font-body: "Source Sans 3", "Segoe UI", sans-serif;
+$font-display: "DM Sans", "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
+$font-body: "Be Vietnam Pro", "Segoe UI", Arial, sans-serif;
 
 $space-xs: 0.25em;
 $space-sm: 0.5em;
@@ -67,7 +67,7 @@ $card-w-center-phone: 3.05em;
   background-color: $surface;
   color: $ink;
   font-family: $font-body;
-  font-weight: 600;
+  font-weight: 500;
   font-variant: normal;
   box-shadow: none;
   cursor: pointer;
