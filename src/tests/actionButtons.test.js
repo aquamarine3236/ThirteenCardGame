@@ -12,6 +12,16 @@ function getButtonMarkup(element) {
   return renderToStaticMarkup(element);
 }
 
+function findElement(element, predicate) {
+  if (!React.isValidElement(element)) return null;
+  if (predicate(element)) return element;
+  for (const child of React.Children.toArray(element.props.children)) {
+    const match = findElement(child, predicate);
+    if (match) return match;
+  }
+  return null;
+}
+
 describe("action button labels", () => {
   it("keeps Play fixed when a regular play is invalid, waiting, or ready", () => {
     const invalid = getButtonMarkup(
@@ -79,6 +89,41 @@ describe("action button labels", () => {
 });
 
 describe("game results", () => {
+  it("does not pass the click event to the next-hand move", () => {
+    const startNextHand = jest.fn();
+    const component = new GameArea({
+      playerID: "0",
+      ctx: { currentPlayer: "0" },
+      moves: { startNextHand },
+      matchData: [{ id: 0, name: "Mây" }],
+      G: {
+        handComplete: true,
+        gameResults: {
+          handNumber: 1,
+          rankings: [],
+          netBalances: {},
+          cumulativeBalances: {},
+          whiteWin: false,
+        },
+        handResults: [],
+        winners: [],
+        pendingThreePairLeadPlayer: null,
+        turnOrder: [0, null, null, null],
+        cardsLeft: { 0: 0 },
+        netBalances: { 0: 100 },
+      },
+    });
+    const button = findElement(
+      component.render(),
+      element => element.type === "button"
+    );
+
+    button.props.onClick({ type: "click" });
+
+    expect(startNextHand).toHaveBeenCalledTimes(1);
+    expect(startNextHand).toHaveBeenCalledWith();
+  });
+
   it("renders each rank once in the final results list", () => {
     const markup = renderToStaticMarkup(
       <GameArea

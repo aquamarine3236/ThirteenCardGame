@@ -47,13 +47,13 @@ export default class PlayerArea extends Component {
             <div className="center-container" key="leadChoice">
               <button
                 type="button"
-                onClick={this.props.moves.acceptThreePairLead}
+                onClick={() => this.props.moves.acceptThreePairLead()}
               >
                 Mở ván bằng 3 đôi thông
               </button>
               <button
                 type="button"
-                onClick={this.props.moves.declineThreePairLead}
+                onClick={() => this.props.moves.declineThreePairLead()}
               >
                 Nhường quyền mở ván
               </button>

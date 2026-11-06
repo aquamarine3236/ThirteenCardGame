@@ -85,7 +85,7 @@ export default class GameArea extends Component {
             </details>
             <button
               type="button"
-              onClick={this.props.moves.startNextHand}
+              onClick={() => this.props.moves.startNextHand()}
             >
               Bắt đầu ván tiếp theo
             </button>
