@@ -77,23 +77,32 @@ export default function Rules() {
         còn có thể chơi.
       </p>
       <p>
+        Mỗi lượt có 30 giây. Hết giờ mà chưa đánh, người chơi tự động bỏ lượt;
+        nếu đang chọn quyền mở bằng 3 đôi thông thì tự động nhường quyền.
+      </p>
+      <p>
         Tùy thiết lập, tứ quý hoặc 4 đôi thông chặt 2 có thể cắt vòng, cho
         những người đã bỏ lượt cơ hội tham gia lại.
       </p>
 
-      <h2>Chặt 2 và 3 đôi thông mở đầu</h2>
+      <h2>Chặt và 3 đôi thông mở đầu</h2>
       <ul>
         <li>
-          3 đôi thông có thể được bật để chặt một lá 2; không dùng để chặt đôi
-          2.
+          Thứ tự sức mạnh khi chặt là 3 đôi thông, tứ quý, rồi 4 đôi thông.
+          Bộ mạnh hơn có thể chặt bộ yếu hơn trong chuỗi.
         </li>
         <li>
-          Tứ quý có thể được bật để chặt một lá hoặc đôi 2. Bật chặt đôi 2
-          đồng thời cho phép chặt một lá 2.
+          Tùy chọn luật phòng quyết định bộ nào được chặt một lá hoặc đôi 2;
+          3 đôi thông chỉ chặt một lá 2.
         </li>
         <li>
-          4 đôi thông có thể được bật để chặt một lá hoặc đôi 2. Bật chặt đôi
-          2 đồng thời cho phép chặt một lá 2.
+          Tứ quý chặt được 2 và 3 đôi thông. 4 đôi thông chặt được 2, 3 đôi
+          thông và tứ quý.
+        </li>
+        <li>
+          Tiền phạt được cộng dồn và chỉ chuyển khi chuỗi chặt kết thúc.
+          Người bị chặt cuối cùng trả toàn bộ cho người chặt cuối cùng; mỗi
+          lần một bộ chặt bị bộ mạnh hơn chặt lại sẽ nhân đôi khoản phạt.
         </li>
         <li>
           Nếu người mở ván bằng 3 đôi thông bị người khác đánh 3 đôi thông cao
@@ -127,8 +136,8 @@ export default function Rules() {
           thực chơi.
         </li>
         <li>
-          Khi chặt 2, người chặt trả giá trị của lá 2 cho người có bài ở giữa.
-          Chặt đôi 2 tính tổng giá trị của hai lá.
+          Chặt 2 tính tổng giá trị các lá 2 trong chuỗi; khoản phạt được
+          chuyển một lần khi chuỗi chặt kết thúc.
         </li>
         <li>
           Khi ván kết thúc, các lá 2 còn trên tay những người chưa về nhất bị

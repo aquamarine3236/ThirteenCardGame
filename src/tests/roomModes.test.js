@@ -36,6 +36,36 @@ describe("room participation and card selection", () => {
     );
   });
 
+  it("places an out-of-deal opening card in a uniformly selected seat position", () => {
+    const openingCard = { rank: "3", suit: "S" };
+    const firstSeatDeal = dealHand(
+      { Die: () => 1, Shuffle: cards => cards.slice().reverse() },
+      openingCard,
+      ["0", "1"]
+    );
+    const lastSeatDeal = dealHand(
+      { Die: sides => sides, Shuffle: cards => cards.slice().reverse() },
+      openingCard,
+      ["0", "1"]
+    );
+
+    expect(firstSeatDeal.firstPlayer).toBe(0);
+    expect(lastSeatDeal.firstPlayer).toBe(1);
+  });
+
+  it("rejects duplicate player IDs and malformed shuffle output", () => {
+    expect(() =>
+      dealHand(deterministicRandom, { rank: "3", suit: "S" }, ["0", "0"])
+    ).toThrow("unique players");
+    expect(() =>
+      dealHand(
+        { Die: () => 1, Shuffle: () => Array(52).fill({ rank: "3", suit: "S" }) },
+        { rank: "3", suit: "S" },
+        ["0", "1"]
+      )
+    ).toThrow("complete, unique deck");
+  });
+
   it("keeps a room unstarted and prevents card moves before the host starts it", () => {
     const before = TienLen.setup(
       { numPlayers: 4, random: deterministicRandom },

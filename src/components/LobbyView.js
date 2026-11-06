@@ -900,7 +900,7 @@ function LobbyView() {
         </Switch>
       </Router>
       <GithubCorner
-        href="https://github.com/nguyenank/tien-len"
+        href="https://github.com/aquamarine3236/ThirteenCardGame.git"
         octoColor="#e9e4d8"
         bannerColor="#a84830"
       />

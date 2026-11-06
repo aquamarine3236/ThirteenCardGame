@@ -12,6 +12,7 @@ import {
   validChop,
   compareHighest,
   compareCards,
+  chopStrength,
 } from "./helper-functions/cardComparison";
 import { unpackMove } from "./moveContext";
 const _ = require("lodash");
@@ -63,6 +64,7 @@ export function tienLenPlay(contextOrG, legacyContext) {
     G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer ||
+    isTurnExpired(G) ||
     ctx.activePlayers &&
     ctx.activePlayers[ctx.currentPlayer] !== "tienLen"
   ) {
@@ -94,6 +96,7 @@ export function cardsToCenter(contextOrG, legacyContext) {
     G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer ||
+    isTurnExpired(G) ||
     ctx.activePlayers &&
     ["tienLen", "leadChoice"].includes(
       ctx.activePlayers[ctx.currentPlayer]
@@ -128,6 +131,13 @@ function playStagingArea(G, ctx, isFreePlay) {
   const handType = validCombination(cards);
   const choppedPlayer = G.centerPlayerID;
   const chop = validChop(G.center, cards, rules);
+  const isStrongerSameTypeResponse =
+    G.chopChain &&
+    chopStrength(handType) > 0 &&
+    handType === G.roundType &&
+    cards.length === G.center.length &&
+    compareHighest(cards, G.center) === 1;
+  const isChopChainResponse = chop || isStrongerSameTypeResponse;
   const cutRound = shouldCutRound(handType, rules);
   const continuesFreePlay =
     isFreePlay &&
@@ -156,6 +166,9 @@ function playStagingArea(G, ctx, isFreePlay) {
     ctx.events.setStage("notTurn");
   }
   if (isFreePlay && !continuesFreePlay) {
+    settleChopChain(G);
+  }
+  if (isFreePlay && !continuesFreePlay) {
     G.turnOrder = makeTurnOrder(G, true);
   }
   if (G.openingThreePairLeadPlayer && (chop || (isFreePlay && !continuesFreePlay))) {
@@ -163,12 +176,42 @@ function playStagingArea(G, ctx, isFreePlay) {
     G.openingThreePairLeadPenaltyApplied = false;
   }
 
-  if (chop && choppedPlayer !== undefined) {
-    const chopKey = getChopKey(G.center, handType);
-    const amount = twoCardValue(G.center, rules);
-    if (amount > 0 && choppedPlayer !== currentPlayer) {
-      transfer(G, currentPlayer, choppedPlayer, amount, `chop-${chopKey}`);
+  if (isChopChainResponse && choppedPlayer !== undefined) {
+    const strength = chopStrength(handType);
+    if (!G.chopChain) {
+      G.chopChain = {
+        amount: G.twoCardPot || twoCardValue(G.center, rules),
+        payer: choppedPlayer,
+        recipient: currentPlayer,
+        multiplier: 1,
+        strength,
+        overchops: 0,
+        type: `chop-${getChopKey(G.center, handType)}`,
+      };
+    } else {
+      const higherSameStrengthChop =
+        strength === G.chopChain.strength &&
+        handType === G.roundType &&
+        compareHighest(cards, G.center) === 1;
+      if (strength > G.chopChain.strength || higherSameStrengthChop) {
+        G.chopChain.multiplier *= 2;
+        G.chopChain.overchops += 1;
+      }
+      G.chopChain.strength = Math.max(G.chopChain.strength, strength);
+      G.chopChain.payer = choppedPlayer;
+      G.chopChain.recipient = currentPlayer;
     }
+  }
+
+  if (cards.every(card => card.rank === "2")) {
+    const centerIsTwoSet =
+      G.center.length > 0 && G.center.every(card => card.rank === "2");
+    G.twoCardPot =
+      (centerIsTwoSet ? G.twoCardPot : 0) + twoCardValue(cards, rules);
+  } else if (isChopChainResponse) {
+    G.twoCardPot = 0;
+  } else {
+    G.twoCardPot = 0;
   }
 
   if (
@@ -237,11 +280,54 @@ export function passTurn(contextOrG, legacyContext) {
   if (
     G.handComplete ||
     G.pendingThreePairLeadPlayer ||
+    isTurnExpired(G) ||
     ctx.activePlayers &&
     ctx.activePlayers[ctx.currentPlayer] === "tienLen"
   ) {
     return INVALID_MOVE;
   }
+  return applyPassTurn(G, ctx);
+}
+
+export function timeoutTurn(contextOrG, legacyContext, ...legacyArgs) {
+  const { G, ctx, args } = unpackMove(
+    contextOrG,
+    legacyContext,
+    ...legacyArgs
+  );
+  const [expectedTurn, expectedDeadline] = args;
+  if (
+    G.handComplete ||
+    !isTurnExpired(G) ||
+    expectedTurn !== ctx.turn ||
+    expectedDeadline !== G.turnDeadlineAt ||
+    !G.players[ctx.currentPlayer] ||
+    !isActivePlayer(G, ctx.currentPlayer)
+  ) {
+    return INVALID_MOVE;
+  }
+
+  if (G.pendingThreePairLeadPlayer === ctx.currentPlayer) {
+    return declineThreePairLeadState(G, ctx);
+  }
+
+  if (ctx.activePlayers && ctx.activePlayers[ctx.currentPlayer] === "tienLen") {
+    settleChopChain(G);
+    G.turnOrder = makeTurnOrder(G, true);
+    G.roundType = Combinations.ANY;
+    G.center = [];
+    G.centerPlayerID = null;
+    G.twoCardPot = 0;
+    G.openingThreePairLeadPlayer = null;
+    G.openingThreePairLeadPenaltyApplied = false;
+    nextTurn(G, ctx);
+    return;
+  }
+
+  return applyPassTurn(G, ctx);
+}
+
+function applyPassTurn(G, ctx) {
   const playerIndex = parseInt(ctx.currentPlayer, 10);
   if (
     !G.players[ctx.currentPlayer] ||
@@ -316,6 +402,8 @@ export function startNextHand(contextOrG, legacyContext) {
   G.pendingThreePairLeadPlayer = leadCandidate;
   G.openingThreePairLeadPlayer = null;
   G.openingThreePairLeadPenaltyApplied = false;
+  G.chopChain = null;
+  G.twoCardPot = 0;
 
   ctx.events.endTurn({ next: leadCandidate || previousWinner });
 }
@@ -327,6 +415,7 @@ export function acceptThreePairLead(contextOrG, legacyContext) {
     G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer !== playerID ||
+    isTurnExpired(G) ||
     !G.players[playerID] ||
     !isActivePlayer(G, playerID)
   ) {
@@ -357,6 +446,11 @@ export function acceptThreePairLead(contextOrG, legacyContext) {
 
 export function declineThreePairLead(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
+  if (isTurnExpired(G)) return INVALID_MOVE;
+  return declineThreePairLeadState(G, ctx);
+}
+
+function declineThreePairLeadState(G, ctx) {
   const playerID = ctx.currentPlayer;
   if (
     G.started === false ||
@@ -382,13 +476,42 @@ function nextTurn(G, ctx) {
     nextPlayer = findNextPlayer(G.turnOrder, currentPlayer);
     activeSlots = G.turnOrder.filter(x => x !== null);
   } else if (nextPlayer === "W" && activeSlots.length === 1) {
+    settleChopChain(G);
     G.turnOrder = makeTurnOrder(G, true);
     G.roundType = Combinations.ANY;
+    G.center = [];
+    G.centerPlayerID = null;
+    G.twoCardPot = 0;
     G.openingThreePairLeadPlayer = null;
     G.openingThreePairLeadPenaltyApplied = false;
     currentPlayer = parseInt(G.winners[G.winners.length - 1], 10);
     nextPlayer = findNextPlayer(G.turnOrder, currentPlayer);
     activeSlots = G.turnOrder.filter(x => x !== null);
+  }
+
+  const playersStillInRound = G.turnOrder.filter(
+    player => player !== null && player !== "W"
+  );
+  if (playersStillInRound.length === 0) {
+    settleChopChain(G);
+    const previousCenterPlayer =
+      G.centerPlayerID === null
+        ? currentPlayer
+        : parseInt(G.centerPlayerID, 10);
+    G.turnOrder = makeTurnOrder(G, true);
+    G.roundType = Combinations.ANY;
+    G.center = [];
+    G.centerPlayerID = null;
+    G.twoCardPot = 0;
+    G.openingThreePairLeadPlayer = null;
+    G.openingThreePairLeadPenaltyApplied = false;
+    nextPlayer = findNextPlayer(G.turnOrder, previousCenterPlayer);
+  } else if (
+    playersStillInRound.length === 1 &&
+    String(playersStillInRound[0]) === String(G.centerPlayerID)
+  ) {
+    settleChopChain(G);
+    G.twoCardPot = 0;
   }
 
   ctx.events.endTurn({ next: nextPlayer });
@@ -458,7 +581,27 @@ function transfer(G, from, to, amount, type) {
   G.settlementLog.push({ type, from, to, amount, handNumber: G.handNumber });
 }
 
+function isTurnExpired(G) {
+  return Number.isFinite(G.turnDeadlineAt) && Date.now() >= G.turnDeadlineAt;
+}
+
+function settleChopChain(G) {
+  const chain = G.chopChain;
+  if (!chain) return;
+  G.chopChain = null;
+  G.twoCardPot = 0;
+
+  const amount = chain.amount * chain.multiplier;
+  if (amount > 0 && chain.payer !== chain.recipient) {
+    transfer(G, chain.payer, chain.recipient, amount, chain.type);
+    const settlement = G.settlementLog[G.settlementLog.length - 1];
+    settlement.multiplier = chain.multiplier;
+    settlement.overchops = chain.overchops;
+  }
+}
+
 function settleGame(G, rules) {
+  settleChopChain(G);
   const activePlayerIDs = getActivePlayerIDs(G);
   const rankings = G.winners.concat(
     activePlayerIDs.filter(playerID => !G.winners.includes(playerID))

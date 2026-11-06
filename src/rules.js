@@ -5,7 +5,7 @@ export const DEFAULT_RULES = {
   threeSpadesFirstPlaceWhiteWin: false,
   allowTwoAsLastCard: false,
   chops: {
-    threePairSingleTwo: false,
+    threePairSingleTwo: true,
     threePairLead: true,
     fourKindSingleTwo: true,
     fourKindPairTwo: false,

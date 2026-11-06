@@ -109,26 +109,54 @@ export function validCombination(cards) {
 
 export function validChop(center, cards, rules = DEFAULT_RULES) {
   const combo = validCombination(cards);
-  if (
-    center.length === 0 ||
-    center.length > 2 ||
-    center.some(card => card.rank !== "2")
-  ) {
+  const centerCombo = validCombination(center);
+  if (!center.length || !combo) {
     return false;
   }
-  if (center.length === 2) {
-    return (
-      (combo === Combinations.FOUROFAKIND && rules.chops.fourKindPairTwo) ||
-      (combo === Combinations.FOURPAIR && rules.chops.fourPairPairTwo)
-    );
+
+  if (
+    centerCombo === Combinations.SINGLE &&
+    center[0].rank === "2"
+  ) {
+    return chopPermission(combo, rules, "singleTwo");
   }
+  if (
+    centerCombo === Combinations.PAIR &&
+    center.every(card => card.rank === "2")
+  ) {
+    return chopPermission(combo, rules, "pairTwo");
+  }
+
   return (
-    (combo === Combinations.THREEPAIR && rules.chops.threePairSingleTwo) ||
-    (combo === Combinations.FOUROFAKIND &&
-      (rules.chops.fourKindSingleTwo || rules.chops.fourKindPairTwo)) ||
-    (combo === Combinations.FOURPAIR &&
-      (rules.chops.fourPairSingleTwo || rules.chops.fourPairPairTwo))
+    chopStrength(combo) > chopStrength(centerCombo) &&
+    chopStrength(centerCombo) > 0 &&
+    chopPermission(combo, rules, "singleTwo")
   );
+}
+
+export function chopStrength(combo) {
+  return {
+    [Combinations.THREEPAIR]: 1,
+    [Combinations.FOUROFAKIND]: 2,
+    [Combinations.FOURPAIR]: 3,
+  }[combo] || 0;
+}
+
+function chopPermission(combo, rules, target) {
+  if (combo === Combinations.THREEPAIR) {
+    return target === "singleTwo" && rules.chops.threePairSingleTwo;
+  }
+  if (combo === Combinations.FOUROFAKIND) {
+    return target === "pairTwo"
+      ? rules.chops.fourKindPairTwo
+      : rules.chops.fourKindSingleTwo || rules.chops.fourKindPairTwo;
+  }
+  if (combo === Combinations.FOURPAIR) {
+    return target === "pairTwo"
+      ? rules.chops.fourPairPairTwo
+      : rules.chops.fourPairSingleTwo || rules.chops.fourPairPairTwo;
+  }
+  return false;
 }
 
 function consecutive(ranks) {

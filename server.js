@@ -5,11 +5,13 @@ import serve from "koa-static";
 import path from "path";
 import crypto from "crypto";
 import koaBody from "koa-body";
+import { Master } from "boardgame.io/master";
 import { default as TienLen } from "./src/TienLen";
 import { dealHand } from "./src/dealHand";
-import { Combinations } from "./src/constants";
+import { Combinations, TURN_TIMEOUT_MS } from "./src/constants";
 
 const PORT = process.env.PORT || 8000;
+const TURN_TIMEOUT_POLL_MS = 500;
 
 const extraOrigins = (process.env.CORS_ORIGIN || "")
   .split(",")
@@ -170,6 +172,10 @@ server.router.post("/games/:name/:id/start", koaBody(), async ctx => {
   }, {});
   state.G.activePlayerIDs = activePlayerIDs;
   state.G.started = true;
+  const startedAt = Date.now();
+  state.G.turnDeadlineAt = startedAt + TURN_TIMEOUT_MS;
+  state.G.chopChain = null;
+  state.G.twoCardPot = 0;
   state.G.turnOrder = [0, 1, 2, 3].map(id =>
     activePlayerIDs.includes(String(id)) ? id : null
   );
@@ -213,12 +219,114 @@ server.router.post("/games/:name/:id/start", koaBody(), async ctx => {
   );
   state._stateID += 1;
   metadata.started = true;
-  metadata.startedAt = Date.now();
+  metadata.startedAt = startedAt;
+  metadata.updatedAt = startedAt;
 
   await server.db.setState(matchID, state);
   await server.db.setMetadata(matchID, metadata);
   ctx.body = { started: true };
 });
+
+async function processExpiredTurn(matchID) {
+  const { state, metadata } = await server.db.fetch(matchID, {
+    state: true,
+    metadata: true,
+  });
+  if (
+    !state ||
+    !metadata ||
+    !metadata.players ||
+    !state.G.started ||
+    state.G.handComplete ||
+    !Number.isFinite(state.G.turnDeadlineAt) ||
+    Date.now() < state.G.turnDeadlineAt
+  ) {
+    return;
+  }
+
+  const expectedStateID = state._stateID;
+  const expectedTurn = state.ctx.turn;
+  const expectedDeadline = state.G.turnDeadlineAt;
+  const playerID = String(state.ctx.currentPlayer);
+  const player = metadata.players[playerID];
+  if (
+    !player ||
+    !player.credentials ||
+    !state.G.activePlayerIDs.includes(playerID)
+  ) {
+    return;
+  }
+
+  const action = {
+    type: "MAKE_MOVE",
+    payload: {
+      type: "timeoutTurn",
+      args: [expectedTurn, expectedDeadline],
+      playerID,
+      credentials: player.credentials,
+    },
+  };
+  const transportAPI = {
+    send: () => {
+      console.error(`Unexpected direct timeout response for match ${matchID}.`);
+    },
+    sendAll: payload =>
+      server.transport.pubSub.publish(`MATCH-${matchID}`, payload),
+  };
+  const master = new Master(TienLen, server.db, transportAPI, server.auth);
+  const matchQueue = server.transport.getMatchQueue(matchID);
+  await matchQueue.add(async () => {
+    const current = await server.db.fetch(matchID, { state: true });
+    if (
+      !current.state ||
+      current.state._stateID !== expectedStateID ||
+      current.state.ctx.turn !== expectedTurn ||
+      current.state.G.turnDeadlineAt !== expectedDeadline ||
+      Date.now() < current.state.G.turnDeadlineAt
+    ) {
+      return;
+    }
+
+    const result = await master.onUpdate(
+      action,
+      expectedStateID,
+      matchID,
+      playerID
+    );
+    if (result && result.error) {
+      console.error(`Turn timeout failed for match ${matchID}: ${result.error}`);
+      return;
+    }
+    const updated = await server.db.fetch(matchID, { state: true });
+    if (updated.state && updated.state._stateID === expectedStateID) {
+      console.error(`Turn timeout was not applied for match ${matchID}.`);
+    }
+  });
+}
+
+let timeoutScanRunning = false;
+let fullTimeoutScanPending = true;
+function startTurnTimeoutScheduler() {
+  setInterval(async () => {
+    if (timeoutScanRunning) return;
+    timeoutScanRunning = true;
+    try {
+      const options = { gameName: TienLen.name };
+      if (!fullTimeoutScanPending) {
+        options.where = { updatedAfter: Date.now() - TURN_TIMEOUT_MS * 2 };
+      }
+      const matchIDs = await server.db.listMatches(options);
+      fullTimeoutScanPending = false;
+      for (const matchID of matchIDs) {
+        await processExpiredTurn(matchID);
+      }
+    } catch (error) {
+      console.error("Turn timeout scheduler failed:", error);
+    } finally {
+      timeoutScanRunning = false;
+    }
+  }, TURN_TIMEOUT_POLL_MS);
+}
 
 // Build path relative to the server.js file
 const frontEndAppBuildPath = path.resolve(__dirname, "./build");
@@ -233,4 +341,5 @@ server.run(PORT, () => {
       next
     );
   });
+  startTurnTimeoutScheduler();
 });

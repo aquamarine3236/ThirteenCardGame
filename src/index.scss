@@ -93,6 +93,7 @@ h4 {
     background: transparent;
     cursor: default;
   }
+
 }
 
 .selected-card .card-button {
@@ -168,6 +169,7 @@ ul {
   .game-area {
     margin: $space-xs;
   }
+
 }
 
 .ghost-card {
@@ -199,8 +201,53 @@ ul {
 
 .center {
   @extend %card-area;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 52em;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: $space-sm auto;
   background-color: rgba($gold, 0.35);
   border-color: $gold;
+}
+
+.center > li {
+  flex: 0 0 auto;
+}
+
+.center .card {
+  height: $card-h-center;
+  width: $card-w-center;
+}
+
+@media screen and (max-width: $bp-tablet) {
+  .center .card {
+    height: $card-h-center-tablet;
+    width: $card-w-center-tablet;
+  }
+}
+
+@media screen and (max-width: $bp-phone) {
+  .center {
+    padding: $space-xs;
+  }
+
+  .center .card {
+    height: $card-h-center-phone;
+    width: $card-w-center-phone;
+    margin: 0.1em;
+  }
+}
+
+.turn-timer {
+  color: $surface;
+  font-family: $font-body;
+  font-variant: normal;
+  font-size: 0.95em;
+  letter-spacing: normal;
+  margin: $space-xs 0;
+  text-align: center;
 }
 
 .center-row {

@@ -2,6 +2,7 @@ import { INVALID_MOVE } from "boardgame.io/core";
 import { Combinations, Ranks } from "../constants";
 import {
   cardsToCenter,
+  passTurn,
   startNextHand,
   acceptThreePairLead,
   declineThreePairLead,
@@ -111,7 +112,7 @@ describe("custom rules", () => {
     expect(normalizeRules().openingCard).toEqual({ rank: "3", suit: "S" });
     expect(normalizeRules().allowTwoAsLastCard).toBe(false);
     expect(normalizeRules().settlement.baseStake).toBe(1);
-    expect(normalizeRules().chops.threePairSingleTwo).toBe(false);
+    expect(normalizeRules().chops.threePairSingleTwo).toBe(true);
     expect(normalizeRules().chops.threePairLead).toBe(true);
     expect(normalizeRules().chops.fourKindSingleTwo).toBe(true);
     expect(normalizeRules().chops.fourKindPairTwo).toBe(false);
@@ -241,7 +242,14 @@ describe("custom rules", () => {
       { rank: "5", suit: "C" },
     ];
     const singleTwo = [{ rank: "2", suit: "H" }];
-    expect(validChop(singleTwo, threePairs)).toBe(false);
+    expect(validChop(singleTwo, threePairs)).toBe(true);
+    const disabledThreePairChops = normalizeRules({
+      ...DEFAULT_RULES,
+      chops: { ...DEFAULT_RULES.chops, threePairSingleTwo: false },
+    });
+    expect(validChop(singleTwo, threePairs, disabledThreePairChops)).toBe(
+      false
+    );
     const threePairChops = normalizeRules({
       ...DEFAULT_RULES,
       chops: { ...DEFAULT_RULES.chops, threePairSingleTwo: true },
@@ -273,6 +281,25 @@ describe("custom rules", () => {
     });
     expect(validChop(pairTwos, fourKind, pairTwoChops)).toBe(true);
     expect(validChop(singleTwo, fourKind, pairTwoChops)).toBe(true);
+  });
+
+  it("enforces the chop strength order from three pairs to four pairs", () => {
+    const threePairs = ["3", "4", "5"].flatMap(rank =>
+      ["S", "C"].map(suit => ({ rank, suit }))
+    );
+    const fourKind = ["S", "C", "D", "H"].map(suit => ({
+      rank: "6",
+      suit,
+    }));
+    const fourPairs = ["7", "8", "9", "T"].flatMap(rank =>
+      ["S", "C"].map(suit => ({ rank, suit }))
+    );
+
+    expect(validChop(threePairs, fourKind)).toBe(true);
+    expect(validChop(threePairs, fourPairs)).toBe(true);
+    expect(validChop(fourKind, fourPairs)).toBe(true);
+    expect(validChop(fourKind, threePairs)).toBe(false);
+    expect(validChop(fourPairs, fourKind)).toBe(false);
   });
 
   it("rejects forged cards and invalid plays on the server", () => {
@@ -617,11 +644,16 @@ describe("custom rules", () => {
     });
 
     cardsToCenter(G, makeContext());
-    expect(G.netBalances).toEqual({ 0: -50, 1: 50, 2: 0, 3: 0 });
+    expect(G.netBalances).toEqual({ 0: 0, 1: 0, 2: 0, 3: 0 });
+    expect(G.settlementLog).toEqual([]);
+    passTurn(G, makeContext("1"));
+    passTurn(G, makeContext("2"));
+    passTurn(G, makeContext("3"));
+    expect(G.netBalances).toEqual({ 0: 50, 1: -50, 2: 0, 3: 0 });
     expect(G.settlementLog[0]).toMatchObject({
       type: "chop-fourKindPairTwo",
-      from: "0",
-      to: "1",
+      from: "1",
+      to: "0",
       amount: 50,
     });
     expect(G.turnOrder).toEqual([null, 1, 2, 3]);

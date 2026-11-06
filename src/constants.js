@@ -2,6 +2,8 @@
 
 export const Suits = ["S", "C", "D", "H"];
 
+export const TURN_TIMEOUT_MS = 30 * 1000;
+
 export const Ranks = [
   "3",
   "4",

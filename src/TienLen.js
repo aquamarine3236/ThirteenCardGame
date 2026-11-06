@@ -1,7 +1,7 @@
 // src/TienLen.js
 
 import { Stage } from "boardgame.io/core";
-import { Combinations } from "./constants";
+import { Combinations, TURN_TIMEOUT_MS } from "./constants";
 import { dealHand } from "./dealHand";
 import {
   cardsToCenter,
@@ -10,6 +10,7 @@ import {
   startNextHand,
   acceptThreePairLead,
   declineThreePairLead,
+  timeoutTurn,
 } from "./moves/cardPlayMoves";
 import {
   relocateCards,
@@ -34,9 +35,10 @@ const TienLen = {
     startNextHand,
     acceptThreePairLead,
     declineThreePairLead,
+    timeoutTurn,
   },
   stages: {
-    tienLen: { moves: { tienLenPlay } },
+    tienLen: { moves: { tienLenPlay, timeoutTurn } },
     notTurn: {
       moves: { relocateCards, clearStagingArea, sortStagingArea },
     },
@@ -44,6 +46,7 @@ const TienLen = {
   },
   turn: {
     onBegin: ({ G, events }) => {
+      G.turnDeadlineAt = Date.now() + TURN_TIMEOUT_MS;
       if (G.turnOrder.filter(player => player !== null).length === 1) {
         events.setActivePlayers({
           currentPlayer: { stage: "tienLen" },
@@ -122,6 +125,9 @@ function setUp(ctx, setupData) {
     pendingThreePairLeadPlayer: null,
     openingThreePairLeadPlayer: null,
     openingThreePairLeadPenaltyApplied: false,
+    chopChain: null,
+    twoCardPot: 0,
+    turnDeadlineAt: Date.now() + TURN_TIMEOUT_MS,
   };
 }
 

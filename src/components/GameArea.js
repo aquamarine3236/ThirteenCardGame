@@ -4,6 +4,7 @@ import React, { Component } from "react";
 import { getClassName } from "./_helperFunctions";
 import CardArea from "./CardArea";
 import PlayerStatus from "./PlayerStatus";
+import TurnTimer from "./TurnTimer";
 const _ = require("lodash");
 
 export default class GameArea extends Component {
@@ -89,6 +90,9 @@ export default class GameArea extends Component {
               </p>
             )}
             {this.props.G.roundType}
+            {this.props.G.started && (
+              <TurnTimer deadlineAt={this.props.G.turnDeadlineAt} />
+            )}
             <CardArea
               className="center"
               listName="center"

@@ -32,10 +32,16 @@ $bp-phone: 600px;
 
 $card-h: 5.84375em;
 $card-w: 4.25em;
+$card-h-center: 6.4em;
+$card-w-center: 4.65em;
 $card-h-tablet: 4.125em;
 $card-w-tablet: 3em;
+$card-h-center-tablet: 5.2em;
+$card-w-center-tablet: 3.8em;
 $card-h-phone: 3.45em;
 $card-w-phone: 2.5em;
+$card-h-center-phone: 4.2em;
+$card-w-center-phone: 3.05em;
 
 @mixin sharp-panel {
   border-radius: $radius;
