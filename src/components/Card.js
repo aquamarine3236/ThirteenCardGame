@@ -11,13 +11,25 @@ function resolveCardSrc(rank, suit) {
   return asset && asset.default;
 }
 
-export default function Card({ rank, suit, disabled, selected, onClick }) {
+export default function Card({
+  rank,
+  suit,
+  disabled,
+  selected,
+  onClick,
+  dragProvided,
+}) {
   const id = rank + suit;
   return (
-    <li className={selected ? "selected-card" : ""}>
+    <li
+      ref={dragProvided ? dragProvided.innerRef : undefined}
+      {...(dragProvided ? dragProvided.draggableProps : {})}
+      className={selected ? "selected-card" : ""}
+    >
       <button
         type="button"
         className="card-button"
+        {...(dragProvided ? dragProvided.dragHandleProps : {})}
         onClick={onClick}
         disabled={disabled || !onClick}
         aria-label={`${selected ? "Bỏ chọn" : "Chọn"} lá ${id}`}
@@ -40,4 +52,5 @@ Card.propTypes = {
   disabled: PropTypes.bool,
   selected: PropTypes.bool,
   onClick: PropTypes.func,
+  dragProvided: PropTypes.object,
 };

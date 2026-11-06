@@ -21,7 +21,8 @@ export function validPlay(
   roundType,
   center,
   requiredOpeningCard,
-  rules = DEFAULT_RULES
+  rules = DEFAULT_RULES,
+  isFinalPlay = false
 ) {
   const handType = validCombination(stagingArea);
   if (stagingArea.length === 0 || handType === undefined) {
@@ -36,6 +37,13 @@ export function validPlay(
     )
   ) {
     return `First Play Must Include ${openingCardLabel(requiredOpeningCard)}`;
+  }
+  if (
+    isFinalPlay &&
+    !rules.allowTwoAsLastCard &&
+    stagingArea.some(card => card.rank === "2")
+  ) {
+    return "Cannot Finish With a 2";
   }
   if (roundType === Combinations.ANY || validChop(center, stagingArea, rules)) {
     return true;
@@ -103,7 +111,8 @@ export function cardsToCenter(contextOrG, legacyContext) {
       G.roundType,
       G.center,
       requiredOpeningCard,
-      rules
+      rules,
+      G.cardsLeft[ctx.currentPlayer] === player.stagingArea.length
     ) !== true
   ) {
     return INVALID_MOVE;
@@ -132,7 +141,10 @@ function playStagingArea(G, ctx, isFreePlay) {
     cards.length === 0 ||
     handType === undefined ||
     !Number.isInteger(G.cardsLeft[currentPlayer]) ||
-    G.cardsLeft[currentPlayer] < cards.length
+    G.cardsLeft[currentPlayer] < cards.length ||
+    (!rules.allowTwoAsLastCard &&
+      G.cardsLeft[currentPlayer] === cards.length &&
+      cards.some(card => card.rank === "2"))
   ) {
     return INVALID_MOVE;
   }
@@ -192,6 +204,12 @@ function playStagingArea(G, ctx, isFreePlay) {
 
   if (G.cardsLeft[currentPlayer] === 0) {
     G.winners.push(currentPlayer);
+    if (G.winners.length === 1) {
+      G.firstWinnerFinishedWithThreeSpades =
+        cards.length === 1 &&
+        cards[0].rank === "3" &&
+        cards[0].suit === "S";
+    }
     G.turnOrder = G.turnOrder.map(x => (x === "W" ? null : x));
     G.turnOrder[parseInt(currentPlayer, 10)] = "W";
   }
@@ -286,6 +304,7 @@ export function startNextHand(contextOrG, legacyContext) {
   G.centerPlayerID = null;
   G.roundType = Combinations.ANY;
   G.winners = [];
+  G.firstWinnerFinishedWithThreeSpades = false;
   G.firstPlayer = Number(previousWinner);
   G.threeSpadesPlayer = threeSpadesPlayer;
   G.firstMove = false;
@@ -447,7 +466,7 @@ function settleGame(G, rules) {
   const { settlement } = rules;
   const whiteWin =
     rules.threeSpadesFirstPlaceWhiteWin &&
-    rankings[0] === String(G.threeSpadesPlayer);
+    G.firstWinnerFinishedWithThreeSpades;
   const whiteWinMultiplier = whiteWin ? WHITE_WIN_MULTIPLIER : 1;
   let payouts;
   if (settlement.mode === "winner-vs-others") {

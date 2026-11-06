@@ -293,11 +293,22 @@ function LobbyHome({
               })
             }
           />
-          Người cầm 3♠ đi đầu về nhất được tính thắng trắng
+          3♠ phải là lá cuối cùng người chơi đánh ra để được tính thắng trắng
         </label>
         {rules.threeSpadesFirstPlaceWhiteWin && (
           <p>Thắng trắng được tính gấp 2 lần tiền cược.</p>
         )}
+
+        <fieldset>
+          <legend>Đánh 2 khi hết bài</legend>
+          <RuleCheckbox
+            checked={rules.allowTwoAsLastCard}
+            label="Cho phép dùng 2 ở nước đánh hết bài"
+            onChange={checked =>
+              setRules({ ...rules, allowTwoAsLastCard: checked })
+            }
+          />
+        </fieldset>
 
         <fieldset>
           <legend>3 đôi thông</legend>

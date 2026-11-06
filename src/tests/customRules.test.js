@@ -7,7 +7,10 @@ import {
   declineThreePairLead,
   validPlay,
 } from "../moves/cardPlayMoves";
-import { relocateCards } from "../moves/cardAreaMoves";
+import {
+  relocateCards,
+  sortStagingArea,
+} from "../moves/cardAreaMoves";
 import { validChop } from "../moves/helper-functions/cardComparison";
 import TienLen, { playerView } from "../TienLen";
 import { DEFAULT_RULES, normalizeRules } from "../rules";
@@ -106,6 +109,7 @@ function makeDeckWithThreePairCandidates() {
 describe("custom rules", () => {
   it("uses the default opening card and rejects invalid settings", () => {
     expect(normalizeRules().openingCard).toEqual({ rank: "3", suit: "S" });
+    expect(normalizeRules().allowTwoAsLastCard).toBe(false);
     expect(normalizeRules().settlement.baseStake).toBe(1);
     expect(normalizeRules().chops.threePairSingleTwo).toBe(false);
     expect(normalizeRules().chops.threePairLead).toBe(true);
@@ -113,6 +117,18 @@ describe("custom rules", () => {
     expect(normalizeRules().chops.fourKindPairTwo).toBe(false);
     expect(normalizeRules().chops.fourPairPairTwo).toBe(true);
     expect(normalizeRules().chops.fourPairCutRound).toBe(true);
+    expect(
+      normalizeRules({
+        ...DEFAULT_RULES,
+        allowTwoAsLastCard: true,
+      }).allowTwoAsLastCard
+    ).toBe(true);
+    expect(() =>
+      normalizeRules({
+        ...DEFAULT_RULES,
+        allowTwoAsLastCard: "yes",
+      })
+    ).toThrow("final-two");
     expect(
       normalizeRules({
         ...DEFAULT_RULES,
@@ -180,6 +196,11 @@ describe("custom rules", () => {
         rules: { ...DEFAULT_RULES, openingCard: { rank: "2", suit: "S" } },
       })
     ).toContain("opening card");
+    expect(
+      TienLen.validateSetupData({
+        rules: { ...DEFAULT_RULES, allowTwoAsLastCard: "yes" },
+      })
+    ).toContain("final-two");
     expect(TienLen.validateSetupData({ unexpected: true })).toContain(
       "setup data"
     );
@@ -277,6 +298,122 @@ describe("custom rules", () => {
     expect(cardsToCenter(G, makeContext())).toBe(INVALID_MOVE);
   });
 
+  it("prevents a 2 from finishing a hand unless the rule is enabled", () => {
+    const illegalFinish = makeState({
+      activePlayerIDs: ["0", "1"],
+      players: {
+        0: {
+          hand: [],
+          stagingArea: [
+            { rank: "2", suit: "S" },
+            { rank: "2", suit: "H" },
+          ],
+        },
+        1: { hand: [{ rank: "3", suit: "S" }], stagingArea: [] },
+        2: { hand: [], stagingArea: [] },
+        3: { hand: [], stagingArea: [] },
+      },
+      cardsLeft: { 0: 2, 1: 1, 2: 0, 3: 0 },
+    });
+
+    expect(cardsToCenter(illegalFinish, makeContext("0"))).toBe(INVALID_MOVE);
+    expect(illegalFinish.winners).toEqual([]);
+    expect(illegalFinish.players["0"].stagingArea).toHaveLength(2);
+
+    const allowedRules = normalizeRules({
+      ...DEFAULT_RULES,
+      allowTwoAsLastCard: true,
+    });
+    const allowedFinish = makeState({
+      activePlayerIDs: ["0", "1"],
+      players: {
+        0: { hand: [], stagingArea: [{ rank: "2", suit: "H" }] },
+        1: { hand: [{ rank: "3", suit: "S" }], stagingArea: [] },
+        2: { hand: [], stagingArea: [] },
+        3: { hand: [], stagingArea: [] },
+      },
+      cardsLeft: { 0: 1, 1: 1, 2: 0, 3: 0 },
+      rules: allowedRules,
+    });
+
+    cardsToCenter(allowedFinish, makeContext("0"));
+    expect(allowedFinish.winners).toEqual(["0"]);
+    expect(allowedFinish.handComplete).toBe(true);
+  });
+
+  it("reorders cards within a hand and across the hand and staging area", () => {
+    const G = makeState({
+      players: {
+        0: {
+          hand: [
+            { rank: "3", suit: "S" },
+            { rank: "4", suit: "S" },
+          ],
+          stagingArea: [
+            { rank: "5", suit: "S" },
+            { rank: "6", suit: "S" },
+          ],
+        },
+        1: { hand: [], stagingArea: [] },
+        2: { hand: [], stagingArea: [] },
+        3: { hand: [], stagingArea: [] },
+      },
+    });
+
+    relocateCards(G, makeContext("0"), {
+      source: { droppableId: "hand", index: 0 },
+      destination: { droppableId: "hand", index: 1 },
+    });
+    expect(G.players["0"].hand.map(card => card.rank)).toEqual(["4", "3"]);
+
+    relocateCards(G, makeContext("0"), {
+      source: { droppableId: "stagingArea", index: 0 },
+      destination: { droppableId: "stagingArea", index: 1 },
+    });
+    expect(G.players["0"].stagingArea.map(card => card.rank)).toEqual([
+      "6",
+      "5",
+    ]);
+
+    relocateCards(G, makeContext("0"), {
+      source: { droppableId: "hand", index: 1 },
+      destination: { droppableId: "stagingArea", index: 0 },
+    });
+    expect(G.players["0"].hand.map(card => card.rank)).toEqual(["4"]);
+    expect(G.players["0"].stagingArea.map(card => card.rank)).toEqual([
+      "3",
+      "6",
+      "5",
+    ]);
+  });
+
+  it("returns staged cards to hand before sorting all cards high to low", () => {
+    const G = makeState({
+      players: {
+        0: {
+          hand: [
+            { rank: "3", suit: "S" },
+            { rank: "A", suit: "H" },
+          ],
+          stagingArea: [
+            { rank: "2", suit: "S" },
+            { rank: "4", suit: "C" },
+          ],
+        },
+        1: { hand: [], stagingArea: [] },
+        2: { hand: [], stagingArea: [] },
+        3: { hand: [], stagingArea: [] },
+      },
+    });
+
+    sortStagingArea(G, makeContext("0"));
+
+    expect(G.players["0"].stagingArea).toEqual([]);
+    expect(
+      G.players["0"].hand.map(card => `${card.rank}${card.suit}`)
+    ).toEqual(["2S", "AH", "4C", "3S"]);
+  });
+
   it("settles the final ranking, chops, and leftover 2s as virtual balances", () => {
     const rules = normalizeRules({
       ...DEFAULT_RULES,
@@ -310,6 +447,46 @@ describe("custom rules", () => {
     expect(G.netBalances).toEqual(G.gameResults.cumulativeBalances);
     expect(G.handComplete).toBe(true);
     expect(G.handResults).toHaveLength(1);
+  });
+
+  it("counts a white win only when the first-place player finishes with the single 3 of spades", () => {
+    const makeWhiteWinState = cards => {
+      const rules = normalizeRules({
+        ...DEFAULT_RULES,
+        threeSpadesFirstPlaceWhiteWin: true,
+      });
+      return makeState({
+        activePlayerIDs: ["0", "1"],
+        players: {
+          0: { hand: [], stagingArea: cards },
+          1: { hand: [{ rank: "4", suit: "S" }], stagingArea: [] },
+          2: { hand: [], stagingArea: [] },
+          3: { hand: [], stagingArea: [] },
+        },
+        cardsLeft: { 0: cards.length, 1: 1, 2: 0, 3: 0 },
+        rules,
+        threeSpadesPlayer: "0",
+      });
+    };
+
+    const finishesWithThreeSpades = makeWhiteWinState([
+      { rank: "3", suit: "S" },
+    ]);
+    cardsToCenter(finishesWithThreeSpades, makeContext("0"));
+    expect(finishesWithThreeSpades.gameResults.whiteWin).toBe(true);
+
+    const playsThreeSpadesEarlier = makeWhiteWinState([
+      { rank: "4", suit: "S" },
+    ]);
+    cardsToCenter(playsThreeSpadesEarlier, makeContext("0"));
+    expect(playsThreeSpadesEarlier.gameResults.whiteWin).toBe(false);
+
+    const finishesWithACombination = makeWhiteWinState([
+      { rank: "3", suit: "S" },
+      { rank: "3", suit: "C" },
+    ]);
+    cardsToCenter(finishesWithACombination, makeContext("0"));
+    expect(finishesWithACombination.gameResults.whiteWin).toBe(false);
   });
 
   it("adds each hand's settlement to the match balance and retains its record", () => {

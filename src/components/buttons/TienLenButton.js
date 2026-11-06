@@ -13,34 +13,29 @@ export default function TienLenButton({
   center,
   requiredOpeningCard,
   rules,
+  isFinalPlay,
   tienLenPlay,
 }) {
   const stagingArea = player.stagingArea;
   const handType = validCombination(stagingArea);
   let classList;
-  let text = "Tien Len - ";
   const validation = validPlay(
     stagingArea,
     "any",
     [],
     requiredOpeningCard,
-    rules
+    rules,
+    isFinalPlay
   );
   const invalidPlay = validation !== true;
   if (invalidPlay) {
-    text += validation;
     classList = "disabled";
-  } else if (validChop(center, stagingArea, rules)) {
-    text += "Tien Len";
-    classList = "tien-len";
   } else if (
-    roundType !== handType ||
-    compareHighest(stagingArea, center) !== 1 ||
-    stagingArea.length !== center.length
+    validChop(center, stagingArea, rules) ||
+    (roundType === handType &&
+      compareHighest(stagingArea, center) === 1 &&
+      stagingArea.length === center.length)
   ) {
-    text += stagingArea.length === 1 ? "Play Card" : "Play Cards";
-  } else {
-    text += "Tien Len";
     classList = "tien-len";
   }
   return (
@@ -48,9 +43,11 @@ export default function TienLenButton({
       className={classList}
       disabled={invalidPlay}
       key="tienLenPlay"
+      title={invalidPlay ? validation : undefined}
+      type="button"
       onClick={invalidPlay ? () => null : () => tienLenPlay()}
     >
-      {text}
+      Play
     </button>
   );
 }
@@ -61,5 +58,6 @@ TienLenButton.propTypes = {
   center: PropTypes.array,
   requiredOpeningCard: PropTypes.object,
   rules: PropTypes.object,
+  isFinalPlay: PropTypes.bool,
   tienLenPlay: PropTypes.func,
 };

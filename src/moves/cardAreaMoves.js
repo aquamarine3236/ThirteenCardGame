@@ -119,5 +119,8 @@ export function sortStagingArea(contextOrG, legacyContext) {
   ) {
     return INVALID_MOVE;
   }
-  player.stagingArea.sort(compareCards);
+  player.hand = player.hand
+    .concat(player.stagingArea)
+    .sort((card1, card2) => compareCards(card2, card1));
+  player.stagingArea = [];
 }

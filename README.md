@@ -15,8 +15,9 @@ thật.
 2. Chủ phòng bắt đầu khi đã có ít nhất 2 người. Phòng có tối đa 4 người.
 3. Mỗi người được chia 13 lá. Người giữ lá mở đầu đã chọn đi trước và phải
    đánh lá đó trong lượt đầu tiên.
-4. Chọn lá để đưa vào khu vực bài chuẩn bị, sau đó đánh bài hoặc bỏ lượt theo
-   tình huống. Có thể sắp xếp hoặc đưa bài đã chọn trở lại tay.
+4. Chọn hoặc kéo lá vào khu vực bài chuẩn bị, sau đó đánh bài hoặc bỏ lượt
+   theo tình huống. Có thể kéo thả để đổi vị trí; nút Sort đưa bài chuẩn bị về
+   tay rồi sắp xếp toàn bộ bài từ lớn đến nhỏ.
 5. Khi một ván kết thúc, xem thứ hạng và biến động chip; người chơi có thể bắt
    đầu ván tiếp theo. Điểm được cộng dồn trong cùng trận.
 
@@ -45,7 +46,8 @@ mỗi ván mới; người về nhất ván trước thường được mở vá
 | Thiết lập | Mặc định | Tác dụng |
 |---|---|---|
 | Lá mở đầu | 3♠ | Chọn một trong bốn lá 3. Người giữ lá đó đi đầu và phải đánh nó ở lượt đầu ván đầu tiên. |
-| Thắng trắng 3♠ | Tắt | Nếu bật, người giữ 3♠ về nhất được tính thắng trắng; phần kết toán theo thứ hạng của ván đó được nhân đôi. |
+| Thắng trắng 3♠ | Tắt | Nếu bật, người về nhất phải đánh riêng lá 3♠ làm lá cuối cùng để hết bài; phần kết toán theo thứ hạng của ván đó được nhân đôi. |
+| Đánh 2 khi hết bài | Tắt | Nếu bật, người chơi được phép đánh lá 2 (kể cả đôi 2) ở nước làm hết bài. |
 | 3 đôi thông chặt 2 | Tắt | Cho phép 3 đôi thông chặt một lá 2. |
 | 3 đôi thông mở đầu ván sau | Bật | Ở ván kế tiếp, người có bộ 3 đôi thông nhỏ nhất có thể chọn đánh bộ đó để mở đầu thay vì người về nhất ván trước. |
 | Tứ quý chặt 1 lá 2 | Bật | Cho phép tứ quý chặt một lá 2. |

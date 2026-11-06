@@ -14,22 +14,13 @@ export default class StagingAreaButtons extends Component {
         ? "button current-staging-area-btn"
         : "button staging-area-btn";
     return (
-      <div className="center-container">
-        <button
-          className={className}
-          key="sortStagingArea"
-          onClick={() => this.props.sortStagingArea()}
-        >
-          Sort
-        </button>
-        <button
-          className={className}
-          key="clearStagingArea"
-          onClick={() => this.props.clearStagingArea()}
-        >
-          Clear
-        </button>
-      </div>
+      <button
+        className={className}
+        type="button"
+        onClick={() => this.props.sortStagingArea()}
+      >
+        Sort
+      </button>
     );
   }
 }
@@ -37,6 +28,5 @@ export default class StagingAreaButtons extends Component {
 StagingAreaButtons.propTypes = {
   currentPlayer: PropTypes.string,
   playerID: PropTypes.string,
-  clearStagingArea: PropTypes.func,
   sortStagingArea: PropTypes.func,
 };

@@ -3,6 +3,7 @@ import { Ranks, Suits } from "./constants";
 export const DEFAULT_RULES = {
   openingCard: { rank: "3", suit: "S" },
   threeSpadesFirstPlaceWhiteWin: false,
+  allowTwoAsLastCard: false,
   chops: {
     threePairSingleTwo: false,
     threePairLead: true,
@@ -66,6 +67,7 @@ export function normalizeRules(value) {
 
   if (
     typeof value.threeSpadesFirstPlaceWhiteWin !== "boolean" ||
+    typeof value.allowTwoAsLastCard !== "boolean" ||
     !hasExactKeys(chops, [
       "threePairSingleTwo",
       "threePairLead",
@@ -78,7 +80,7 @@ export function normalizeRules(value) {
     ]) ||
     Object.values(chops).some(option => typeof option !== "boolean")
   ) {
-    throw new Error("Invalid chop or white-win rules.");
+    throw new Error("Invalid chop, white-win, or final-two rules.");
   }
 
   if (

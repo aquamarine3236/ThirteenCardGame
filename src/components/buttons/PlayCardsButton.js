@@ -10,6 +10,7 @@ export default function PlayCardsButton({
   center,
   requiredOpeningCard,
   rules,
+  isFinalPlay,
   cardsToCenter,
 }) {
   const stagingArea = player.stagingArea;
@@ -18,24 +19,31 @@ export default function PlayCardsButton({
     roundType,
     center,
     requiredOpeningCard,
-    rules
+    rules,
+    isFinalPlay
   );
   if (typeof p === "string") {
     return (
-      <button className="disabled" disabled={true} key="playcards">
-        {p}
+      <button
+        className="disabled"
+        disabled={true}
+        key="playcards"
+        title={p}
+        type="button"
+      >
+        Play
       </button>
     );
   } else if (playerID !== currentPlayer) {
     return (
-      <button className="wait" key="playcards">
-        Not Your Turn
+      <button className="wait" key="playcards" type="button">
+        Play
       </button>
     );
   } else {
     return (
-      <button key="playcards" onClick={() => cardsToCenter()}>
-        {stagingArea.length === 1 ? "Play Card" : "Play Cards"}
+      <button type="button" onClick={() => cardsToCenter()}>
+        Play
       </button>
     );
   }
@@ -49,5 +57,6 @@ PlayCardsButton.propTypes = {
   center: PropTypes.array,
   requiredOpeningCard: PropTypes.object,
   rules: PropTypes.object,
+  isFinalPlay: PropTypes.bool,
   cardsToCenter: PropTypes.func,
 };

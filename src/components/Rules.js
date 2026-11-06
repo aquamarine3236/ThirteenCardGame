@@ -108,6 +108,11 @@ export default function Rules() {
         người chơi có thể bắt đầu ván kế tiếp. Điểm số được cộng dồn trong
         trận.
       </p>
+      <p>
+        Chủ phòng có thể chọn có cho phép đánh lá 2 (kể cả đôi 2) ở nước đi
+        làm người chơi hết bài hay không. Mặc định không cho phép; luật này
+        không ảnh hưởng đến những lần đánh 2 khác.
+      </p>
       <ul>
         <li>
           Mỗi người bắt đầu với 100 lần tiền cược cơ sở dưới dạng chip ảo.
@@ -132,8 +137,10 @@ export default function Rules() {
           sở.
         </li>
         <li>
-          Có thể bật thắng trắng: nếu người giữ 3♠ về nhất, phần kết toán thứ
-          hạng của ván được nhân đôi. Khoản chặt và thối 2 vẫn tính riêng.
+          Có thể bật thắng trắng: người về nhất phải đánh riêng lá 3♠ làm lá
+          cuối cùng để hết bài; phần kết toán thứ hạng của ván được nhân đôi.
+          Đánh 3♠ trong một tổ hợp nhiều lá không tính là thắng trắng. Khoản
+          chặt và thối 2 vẫn tính riêng.
         </li>
       </ul>
       <p>

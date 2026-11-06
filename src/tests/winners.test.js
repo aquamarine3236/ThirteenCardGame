@@ -72,6 +72,9 @@ describe("winners", () => {
   });
 
   it("should be added to even when the player is in tien len", () => {
+    updateClientState(client, G => {
+      G.rules.allowTwoAsLastCard = true;
+    });
     client.moves.relocateCards([{ suit: "C", rank: "2" }], "stagingArea");
     client.moves.cardsToCenter();
     client.moves.passTurn();
@@ -233,11 +236,14 @@ describe("winners", () => {
     });
 
     it("should switch to a new round if winner finished in tien len", () => {
-      G.players["0"].hand = [
-        { suit: "H", rank: "4" },
-        { suit: "H", rank: "2" },
-      ];
-      G.cardsLeft["0"] = 2;
+      updateClientState(client, G => {
+        G.rules.allowTwoAsLastCard = true;
+        G.players["0"].hand = [
+          { suit: "H", rank: "4" },
+          { suit: "H", rank: "2" },
+        ];
+        G.cardsLeft["0"] = 2;
+      });
       client.moves.relocateCards([{ suit: "H", rank: "4" }], "stagingArea");
       client.moves.cardsToCenter();
       client.moves.passTurn();

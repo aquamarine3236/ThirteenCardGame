@@ -5,6 +5,7 @@ import Buttons from "./Buttons";
 import { getClassName } from "./_helperFunctions";
 import CardArea from "./CardArea";
 import PlayerStatus from "./PlayerStatus";
+import { DragDropContext } from "react-beautiful-dnd";
 const _ = require("lodash");
 
 export default class PlayerArea extends Component {
@@ -68,6 +69,7 @@ export default class PlayerArea extends Component {
                   "staging-area"
                 )}
                 listName="stagingArea"
+                reorderable={true}
                 cards={this.props.G.players[playerID].stagingArea}
                 onCardClick={card =>
                   this.props.moves.relocateCards([card], "hand")
@@ -86,6 +88,7 @@ export default class PlayerArea extends Component {
             <CardArea
               className={getClassName(this.props, playerID, "hand")}
               listName="hand"
+              reorderable={true}
               cards={this.props.G.players[playerID].hand}
               onCardClick={card =>
                 this.props.moves.relocateCards([card], "stagingArea")
@@ -102,9 +105,13 @@ export default class PlayerArea extends Component {
       }
     }
     return (
-      <div className={getClassName(this.props, playerID, "player-area")}>
-        {playerArea}
-      </div>
+      <DragDropContext
+        onDragEnd={result => this.props.moves.relocateCards(result)}
+      >
+        <div className={getClassName(this.props, playerID, "player-area")}>
+          {playerArea}
+        </div>
+      </DragDropContext>
     );
   }
 }

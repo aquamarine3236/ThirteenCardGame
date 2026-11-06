@@ -102,6 +102,7 @@ function setUp(ctx, setupData) {
     started: !roomMode,
     roundType: Combinations.ANY,
     winners: [],
+    firstWinnerFinishedWithThreeSpades: false,
     firstPlayer: firstPlayer,
     threeSpadesPlayer: threeSpadesPlayer,
     firstMove: true,

@@ -406,6 +406,14 @@ button {
   }
 }
 
+.sort-play-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $space-sm;
+  width: 100%;
+}
+
 @media screen and (max-width: $bp-phone) {
   .action-bar {
     .center-container {
@@ -418,6 +426,18 @@ button {
       max-width: 16em;
       margin-left: auto;
       margin-right: auto;
+    }
+  }
+
+  .sort-play-actions {
+    flex-wrap: nowrap;
+
+    button {
+      box-sizing: border-box;
+      flex: 1 1 0;
+      max-width: 8em;
+      min-width: 0;
+      margin: 0;
     }
   }
 
