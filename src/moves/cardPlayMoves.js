@@ -52,6 +52,7 @@ export function validPlay(
 export function tienLenPlay(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
   if (
+    G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer ||
     ctx.activePlayers &&
@@ -82,6 +83,7 @@ export function tienLenPlay(contextOrG, legacyContext) {
 export function cardsToCenter(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
   if (
+    G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer ||
     ctx.activePlayers &&
@@ -126,6 +128,7 @@ function playStagingArea(G, ctx, isFreePlay) {
         compareHighest(cards, G.center) === 1));
 
   if (
+    !isActivePlayer(G, currentPlayer) ||
     cards.length === 0 ||
     handType === undefined ||
     !Number.isInteger(G.cardsLeft[currentPlayer]) ||
@@ -141,9 +144,7 @@ function playStagingArea(G, ctx, isFreePlay) {
     ctx.events.setStage("notTurn");
   }
   if (isFreePlay && !continuesFreePlay) {
-    G.turnOrder = [0, 1, 2, 3].map(x =>
-      G.winners.includes(x.toString()) ? null : x
-    );
+    G.turnOrder = makeTurnOrder(G, true);
   }
   if (G.openingThreePairLeadPlayer && (chop || (isFreePlay && !continuesFreePlay))) {
     G.openingThreePairLeadPlayer = null;
@@ -198,12 +199,13 @@ function playStagingArea(G, ctx, isFreePlay) {
   if (chop && cutRound) {
     G.openingThreePairLeadPlayer = null;
     G.openingThreePairLeadPenaltyApplied = false;
-    G.turnOrder = [0, 1, 2, 3].map(x =>
-      G.winners.includes(x.toString()) ? null : x
-    );
+    G.turnOrder = makeTurnOrder(G, true);
   }
 
-  if (G.winners.length >= 3 && !G.handComplete) {
+  if (
+    G.winners.length >= getActivePlayerIDs(G).length - 1 &&
+    !G.handComplete
+  ) {
     settleGame(G, rules);
     ctx.events.setActivePlayers({ all: "handComplete" });
     return;
@@ -223,7 +225,11 @@ export function passTurn(contextOrG, legacyContext) {
     return INVALID_MOVE;
   }
   const playerIndex = parseInt(ctx.currentPlayer, 10);
-  if (!G.players[ctx.currentPlayer] || !Number.isInteger(playerIndex)) {
+  if (
+    !G.players[ctx.currentPlayer] ||
+    !isActivePlayer(G, ctx.currentPlayer) ||
+    !Number.isInteger(playerIndex)
+  ) {
     return INVALID_MOVE;
   }
   G.turnOrder[playerIndex] = null;
@@ -241,6 +247,7 @@ export function startNextHand(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
   const random = ctx.random || (ctx.ctx && ctx.ctx.random);
   if (
+    G.started === false ||
     !G.handComplete ||
     !G.previousWinner ||
     !random ||
@@ -251,14 +258,30 @@ export function startNextHand(contextOrG, legacyContext) {
   }
 
   const previousWinner = G.previousWinner;
-  const { players, threeSpadesPlayer } = dealHand(random, G.rules.openingCard);
+  const activePlayerIDs = getActivePlayerIDs(G);
+  const { players: dealtPlayers, threeSpadesPlayer } = dealHand(
+    random,
+    G.rules.openingCard,
+    activePlayerIDs
+  );
+  const players = activePlayerIDs.reduce((allPlayers, playerID) => {
+    allPlayers[playerID] = dealtPlayers[playerID];
+    return allPlayers;
+  }, {});
+  const allPlayerIDs = Object.keys(G.players);
+  for (const playerID of allPlayerIDs) {
+    if (!players[playerID]) players[playerID] = { hand: [], stagingArea: [] };
+  }
   const leadCandidate = G.rules.chops.threePairLead
     ? findThreePairLeadCandidate(players, Number(previousWinner))
     : null;
 
   G.handNumber += 1;
   G.players = players;
-  G.cardsLeft = { 0: 13, 1: 13, 2: 13, 3: 13 };
+  G.cardsLeft = Object.keys(G.players).reduce((cardsLeft, playerID) => {
+    cardsLeft[playerID] = G.players[playerID].hand.length;
+    return cardsLeft;
+  }, {});
   G.center = [];
   G.centerPlayerID = null;
   G.roundType = Combinations.ANY;
@@ -266,7 +289,7 @@ export function startNextHand(contextOrG, legacyContext) {
   G.firstPlayer = Number(previousWinner);
   G.threeSpadesPlayer = threeSpadesPlayer;
   G.firstMove = false;
-  G.turnOrder = [0, 1, 2, 3];
+  G.turnOrder = makeTurnOrder(G);
   G.handComplete = false;
   G.gameResults = null;
   G.handStartBalances = { ...G.netBalances };
@@ -282,9 +305,11 @@ export function acceptThreePairLead(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
   const playerID = ctx.currentPlayer;
   if (
+    G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer !== playerID ||
-    !G.players[playerID]
+    !G.players[playerID] ||
+    !isActivePlayer(G, playerID)
   ) {
     return INVALID_MOVE;
   }
@@ -301,7 +326,7 @@ export function acceptThreePairLead(contextOrG, legacyContext) {
   G.roundType = Combinations.THREEPAIR;
   G.firstPlayer = Number(playerID);
   G.firstMove = false;
-  G.turnOrder = [0, 1, 2, 3];
+  G.turnOrder = makeTurnOrder(G);
   G.pendingThreePairLeadPlayer = null;
   G.openingThreePairLeadPlayer = playerID;
   G.openingThreePairLeadPenaltyApplied = false;
@@ -315,9 +340,11 @@ export function declineThreePairLead(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
   const playerID = ctx.currentPlayer;
   if (
+    G.started === false ||
     G.handComplete ||
     G.pendingThreePairLeadPlayer !== playerID ||
-    !G.previousWinner
+    !G.previousWinner ||
+    !isActivePlayer(G, playerID)
   ) {
     return INVALID_MOVE;
   }
@@ -336,9 +363,7 @@ function nextTurn(G, ctx) {
     nextPlayer = findNextPlayer(G.turnOrder, currentPlayer);
     activeSlots = G.turnOrder.filter(x => x !== null);
   } else if (nextPlayer === "W" && activeSlots.length === 1) {
-    G.turnOrder = [0, 1, 2, 3].map(x =>
-      G.winners.includes(x.toString()) ? null : x
-    );
+    G.turnOrder = makeTurnOrder(G, true);
     G.roundType = Combinations.ANY;
     G.openingThreePairLeadPlayer = null;
     G.openingThreePairLeadPenaltyApplied = false;
@@ -352,10 +377,30 @@ function nextTurn(G, ctx) {
 
 function findNextPlayer(turnOrder, currentPlayer) {
   const playerList = turnOrder
-    .slice(currentPlayer + 1, 4)
+    .slice(currentPlayer + 1)
     .concat(turnOrder.slice(0, currentPlayer + 1));
   const next = playerList.find(i => i !== null);
   return next === undefined ? String(currentPlayer) : next.toString();
+}
+
+function getActivePlayerIDs(G) {
+  return Array.isArray(G.activePlayerIDs)
+    ? G.activePlayerIDs.map(String)
+    : Object.keys(G.players);
+}
+
+function isActivePlayer(G, playerID) {
+  return getActivePlayerIDs(G).includes(String(playerID));
+}
+
+function makeTurnOrder(G, excludeWinners = false) {
+  const activePlayerIDs = getActivePlayerIDs(G);
+  return Array.from({ length: 4 }, (_, playerID) => {
+    const id = String(playerID);
+    if (!activePlayerIDs.includes(id)) return null;
+    if (excludeWinners && G.winners.includes(id)) return null;
+    return playerID;
+  });
 }
 
 function getChopKey(center, combo) {
@@ -395,18 +440,23 @@ function transfer(G, from, to, amount, type) {
 }
 
 function settleGame(G, rules) {
+  const activePlayerIDs = getActivePlayerIDs(G);
   const rankings = G.winners.concat(
-    ["0", "1", "2", "3"].filter(playerID => !G.winners.includes(playerID))
+    activePlayerIDs.filter(playerID => !G.winners.includes(playerID))
   );
   const { settlement } = rules;
   const whiteWin =
     rules.threeSpadesFirstPlaceWhiteWin &&
     rankings[0] === String(G.threeSpadesPlayer);
   const whiteWinMultiplier = whiteWin ? WHITE_WIN_MULTIPLIER : 1;
-  const payouts =
-    settlement.mode === "winner-vs-others"
-      ? [3, -1, -1, -1]
-      : settlement.rankPayouts;
+  let payouts;
+  if (settlement.mode === "winner-vs-others") {
+    payouts = [activePlayerIDs.length - 1].concat(
+      Array(activePlayerIDs.length - 1).fill(-1)
+    );
+  } else {
+    payouts = getBalancedRankPayouts(settlement.rankPayouts, rankings.length);
+  }
 
   rankings.forEach((playerID, rank) => {
     const amount =
@@ -432,7 +482,7 @@ function settleGame(G, rules) {
     }
   }
 
-  const handBalances = Object.keys(G.netBalances).reduce((balances, playerID) => {
+  const handBalances = activePlayerIDs.reduce((balances, playerID) => {
     balances[playerID] =
       G.netBalances[playerID] - G.handStartBalances[playerID];
     return balances;
@@ -449,6 +499,25 @@ function settleGame(G, rules) {
   G.handResults.push(handResult);
   G.previousWinner = rankings[0];
   G.handComplete = true;
+}
+
+function getBalancedRankPayouts(configuredPayouts, playerCount) {
+  const payouts = configuredPayouts.slice(0, playerCount);
+  const average = Math.trunc(
+    payouts.reduce((sum, amount) => sum + amount, 0) / playerCount
+  );
+  let remainder = payouts.reduce((sum, amount) => sum + amount, 0) -
+    average * playerCount;
+  for (let index = 0; index < payouts.length; index++) {
+    payouts[index] -= average;
+  }
+  for (let index = payouts.length - 1; remainder !== 0; index--) {
+    const adjustment = Math.sign(remainder);
+    payouts[index] -= adjustment;
+    remainder -= adjustment;
+    if (index === 0) index = payouts.length;
+  }
+  return payouts;
 }
 
 function findThreePairLeadCandidate(players, startingPlayer) {

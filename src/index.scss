@@ -1,20 +1,14 @@
-$cornsilk: #f7f3dc;
-$yellow: #f4d666;
-$orange: #f7b88b;
-$darkorange: #e8775a;
-$red: #bd4a39;
-$grey: #dbd8d5;
-$darkgrey: #a6a09f;
-$darkergrey: #615b5a;
-$shadow: rgba(0, 0, 0, 0.2);
+@import "./styles/tokens";
 
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family: $font-body;
+  font-size: 16px;
+  line-height: 1.45;
+  color: $on-dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: $cornsilk;
+  background-color: $teal;
 }
 
 code {
@@ -22,96 +16,157 @@ code {
     monospace;
 }
 
-/* placeholder classes */
-@mixin shadow {
-  box-shadow: 0.25em 0.25em 0.125em $shadow;
-}
-
-@mixin card-area {
-  border-radius: 0.5em;
-  padding: 0.5em;
-  margin: 0.5em;
-  flex-wrap: nowrap;
-  display: flex;
-  overflow: scroll;
+h1,
+h2,
+h3,
+h4 {
+  font-family: $font-display;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: $gold;
 }
 
 %card-area {
   @include card-area;
-  @include shadow;
-  border-radius: 0.5em;
-  padding: 0.5em;
-  margin: 0.5em;
+  align-items: center;
   min-width: 3.75em;
-  height: 5.84375em;
+  min-height: $card-h;
+  height: auto;
 }
 
 %hand {
   @extend %card-area;
-  margin: 0.5em 0.5em 1em;
+  margin: $space-sm $space-sm $space-lg;
 }
 
 %player-status {
-  @include shadow;
-  border-radius: 1em;
-  padding: 0.75em;
+  border-radius: $radius;
+  border: $border-thick $gold;
+  padding: $space-md;
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
   font-variant: small-caps;
-  width: 6em;
-  overflow: scroll;
+  font-family: $font-display;
+  letter-spacing: 0.04em;
+  width: 6.5em;
+  overflow: auto;
+  color: $on-dark;
+  box-shadow: none;
 }
 
 %player-area {
-  @include shadow;
-  border-radius: 1em;
-  margin: 0.5em;
-  font-weight: bold;
+  border-radius: $radius;
+  border: $border-thick $gold;
+  margin: $space-sm;
+  padding: $space-sm 0;
+  font-weight: 600;
   font-variant: small-caps;
+  box-shadow: none;
 }
 
-/* card related */
+/* cards */
 .card {
-  height: 5.84375em;
-  width: 4.25em;
+  height: $card-h;
+  width: $card-w;
   margin: 0.2em;
+  display: block;
+  border: $border-thin $ink;
+  border-radius: $radius;
+  box-shadow: 1px 1px 0 rgba(31, 42, 42, 0.25);
+}
+
+.card-button {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  transition: transform 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: transparent;
+    transform: translateY(-0.35em);
+  }
+
+  &:disabled {
+    background: transparent;
+    cursor: default;
+  }
+}
+
+.selected-card .card-button {
+  transform: translateY(-0.5em);
+}
+
+.card-button .card {
+  pointer-events: none;
+}
+
+.player-balance {
+  margin-top: $space-xs;
+  font-size: 0.85em;
+  font-variant: normal;
 }
 
 .red-suit {
-  color: #d20000;
+  color: $burnt-red;
 }
 
 ul {
   list-style-type: none;
+  margin: 0;
+  padding: 0;
 }
 
-@media screen and (max-width: 992px) {
+@media screen and (max-width: $bp-tablet) {
   .card {
-    height: 4.125em;
-    width: 3em;
+    height: $card-h-tablet;
+    width: $card-w-tablet;
     margin: 0.1em;
   }
 
   %card-area {
-    @include shadow;
     @include card-area;
+    align-items: center;
     min-width: 2.5em;
-    height: 4.125em;
+    min-height: $card-h-tablet;
+    height: auto;
+  }
+
+  %player-status {
+    width: 5.5em;
+    padding: $space-sm;
   }
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: $bp-phone) {
   .card {
-    height: 3.45em;
-    width: 2.5em;
+    height: $card-h-phone;
+    width: $card-w-phone;
     margin: 0.1em;
   }
 
   %card-area {
-    @include shadow;
     @include card-area;
+    align-items: center;
     min-width: 2em;
-    height: 3.45em;
+    min-height: $card-h-phone;
+    height: auto;
+  }
+
+  %player-status {
+    width: 4.75em;
+    font-size: 0.9em;
+  }
+
+  .game,
+  .table-felt {
+    padding: $space-xs;
+  }
+
+  .game-area {
+    margin: $space-xs;
   }
 }
 
@@ -119,141 +174,254 @@ ul {
   opacity: 0;
 }
 
-// .selected-card {
-//   position: relative;
-//   top: -0.5em;
-// }
-
-/* board related */
+/* board layout */
+.game,
+.table-felt {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: $space-md;
+}
 
 .center-container {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: $space-xs;
 }
 
 .no-shadow {
-  box-shadow: 0 0;
+  box-shadow: none;
 }
 
 .game-area {
-  margin: 0.5em;
+  margin: $space-sm;
 }
 
 .center {
   @extend %card-area;
-  background-color: $yellow;
+  background-color: rgba($gold, 0.35);
+  border-color: $gold;
 }
 
 .center-row {
   display: flex;
   align-items: center;
   justify-content: space-around;
+  gap: $space-sm;
+  flex-wrap: wrap;
 }
 
 .current-player-status {
   @extend %player-status;
-  background-color: $darkorange;
+  background-color: $burnt-red;
+  border-color: $gold;
 }
 
 .passed-player-status {
   @extend %player-status;
-  background-color: $grey;
+  background-color: $passed;
+  border-color: $muted;
+  color: $passed-surface;
 }
 
 .player-status {
   @extend %player-status;
-  background-color: $orange;
+  background-color: $olive;
+  border-color: $amber;
 }
 
 .current-player-area {
   @extend %player-area;
-  background-color: $darkorange;
+  background-color: rgba($burnt-red, 0.35);
+  border-color: $burnt-red;
 }
 
 .passed-player-area {
   @extend %player-area;
-  background-color: $grey;
+  background-color: rgba($passed, 0.45);
+  border-color: $muted;
 }
 
 .player-area {
   @extend %player-area;
-  background-color: $orange;
+  background-color: rgba($olive, 0.4);
+  border-color: $olive;
 }
-
-/* internal player area related*/
 
 .staging-area {
   @extend %card-area;
-  background-color: $darkorange;
+  background-color: rgba($amber, 0.45);
+  border-color: $amber;
 }
 
 .passed-staging-area {
   @extend %card-area;
-  background-color: $darkgrey;
+  background-color: $passed-surface;
+  border-color: $muted;
 }
 
 .current-staging-area {
   @extend %card-area;
-  background-color: $red;
+  background-color: rgba($burnt-red, 0.55);
+  border-color: $gold;
 }
 
 .hand {
   @extend %hand;
-  background-color: $darkorange;
+  background-color: rgba($olive, 0.5);
+  border-color: $olive;
 }
 
 .passed-hand {
   @extend %card-area;
-  background-color: $darkgrey;
+  background-color: $passed-surface;
+  border-color: $muted;
 }
 
 .current-hand {
   @extend %hand;
-  background-color: $red;
+  background-color: rgba($burnt-red, 0.55);
+  border-color: $gold;
 }
 
 .round-type {
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
   font-variant: small-caps;
+  font-family: $font-display;
+  letter-spacing: 0.04em;
+  color: $gold;
+  padding: $space-sm;
 }
 
-/* button related */
+.game-results {
+  @include sharp-panel;
+  color: $ink;
+  max-width: 28em;
+  margin: 0 auto;
+  padding: $space-lg;
+  text-align: left;
+
+  strong {
+    font-family: $font-display;
+    color: $burnt-red;
+    display: block;
+    text-align: center;
+    margin-bottom: $space-sm;
+  }
+
+  details {
+    margin: $space-md 0;
+    border-top: $border-thin $olive;
+    padding-top: $space-sm;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: $olive;
+  }
+}
+
+/* buttons */
 button {
-  @include shadow;
-  margin: 0.5em;
-  background-color: $cornsilk;
-  font-weight: bold;
-  font-variant: normal;
-  border-radius: 1em;
-  border: 0.25em solid $yellow;
+  @include btn-base;
 }
 
 .staging-area-btn {
   font-size: 0.75em;
-  background-color: $orange;
-  border-color: $darkorange;
+  background-color: $olive;
+  border-color: $amber;
+  color: $on-dark;
+
+  &:hover:not(:disabled) {
+    background-color: $amber;
+    color: $ink;
+  }
 }
 
 .current-staging-area-btn {
   font-size: 0.75em;
-  background-color: $darkorange;
-  border-color: $red;
+  background-color: $burnt-red;
+  border-color: $gold;
+  color: $on-dark;
+
+  &:hover:not(:disabled) {
+    background-color: $gold;
+    color: $ink;
+  }
 }
 
 .tien-len {
-  background-color: $yellow;
-  border-color: $orange;
+  background-color: $gold;
+  border-color: $amber;
+  color: $ink;
+  font-family: $font-display;
+  font-size: 1.1em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: $amber;
+    border-color: $gold;
+  }
 }
 
 .disabled {
-  background-color: $grey;
-  border-color: $darkgrey;
-  color: $darkergrey;
+  background-color: $passed-surface;
+  border-color: $muted;
+  color: $muted;
+
+  &:hover:not(:disabled) {
+    background-color: $passed-surface;
+    color: $muted;
+  }
 }
 
 .wait {
-  background-color: $darkgrey;
-  border-color: $darkergrey;
-  color: $darkergrey;
+  background-color: $muted;
+  border-color: $passed;
+  color: $passed-surface;
+
+  &:hover:not(:disabled) {
+    background-color: $muted;
+    color: $passed-surface;
+  }
+}
+
+.action-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-xs;
+  margin: $space-sm 0;
+
+  .center-container {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: $bp-phone) {
+  .action-bar {
+    .center-container {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    button {
+      width: 100%;
+      max-width: 16em;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  .center-row {
+    flex-direction: column;
+  }
 }

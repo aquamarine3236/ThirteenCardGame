@@ -20,6 +20,8 @@ import { normalizeRules } from "./rules";
 
 const TienLen = {
   name: "tien-len",
+  minPlayers: 2,
+  maxPlayers: 4,
   setup: setUp,
   validateSetupData: validateSetupData,
   moves: {
@@ -65,25 +67,51 @@ function setUp(ctx, setupData) {
   const validationError = validateSetupData(setupData);
   if (validationError) throw new Error(validationError);
   const rules = normalizeRules(setupData && setupData.rules);
-  const { players, firstPlayer, threeSpadesPlayer } = dealHand(
-    random,
-    rules.openingCard
-  );
+  const roomMode = Boolean(setupData && setupData.roomMode);
+  const activePlayerIDs = roomMode
+    ? []
+    : Array.from({ length: ctx.numPlayers || 4 }, (_, playerID) =>
+        String(playerID)
+      );
+  const dealtHand = roomMode
+    ? { players: {}, firstPlayer: null, threeSpadesPlayer: null }
+    : dealHand(random, rules.openingCard, activePlayerIDs);
+  const players = Array.from({ length: 4 }, (_, playerID) => String(playerID))
+    .reduce((allPlayers, playerID) => {
+      allPlayers[playerID] = dealtHand.players[playerID] || {
+        hand: [],
+        stagingArea: [],
+      };
+      return allPlayers;
+    }, {});
+  const firstPlayer = roomMode ? 0 : dealtHand.firstPlayer;
+  const threeSpadesPlayer = dealtHand.threeSpadesPlayer;
+  const startingBalances = activePlayerIDs.reduce((balances, playerID) => {
+    balances[playerID] = rules.settlement.baseStake * 100;
+    return balances;
+  }, {});
 
   return {
-    turnOrder: [0, 1, 2, 3],
+    turnOrder: [0, 1, 2, 3].map(playerID =>
+      activePlayerIDs.includes(String(playerID)) ? playerID : null
+    ),
     center: [],
     centerPlayerID: null,
     players: players,
+    activePlayerIDs: activePlayerIDs,
+    started: !roomMode,
     roundType: Combinations.ANY,
     winners: [],
     firstPlayer: firstPlayer,
     threeSpadesPlayer: threeSpadesPlayer,
     firstMove: true,
-    cardsLeft: { 0: 13, 1: 13, 2: 13, 3: 13 },
+    cardsLeft: Object.keys(players).reduce((cardsLeft, playerID) => {
+      cardsLeft[playerID] = players[playerID].hand.length;
+      return cardsLeft;
+    }, {}),
     rules: rules,
-    netBalances: { 0: 0, 1: 0, 2: 0, 3: 0 },
-    handStartBalances: { 0: 0, 1: 0, 2: 0, 3: 0 },
+    netBalances: startingBalances,
+    handStartBalances: { ...startingBalances },
     settlementLog: [],
     handSettlementLogStart: 0,
     handResults: [],
@@ -102,7 +130,9 @@ function validateSetupData(setupData) {
     (setupData === null ||
       typeof setupData !== "object" ||
       Array.isArray(setupData) ||
-      Object.keys(setupData).some(key => key !== "rules"))
+      Object.keys(setupData).some(key => !["rules", "roomMode"].includes(key)) ||
+      (setupData.roomMode !== undefined &&
+        typeof setupData.roomMode !== "boolean"))
   ) {
     return "Invalid match setup data.";
   }
@@ -123,7 +153,9 @@ export function playerView(G, ctx, playerID) {
   for (const id of Object.keys(G.players)) {
     const player = G.players[id];
     players[id] =
-      id === playerID
+      id === playerID &&
+      (!Array.isArray(G.activePlayerIDs) ||
+        G.activePlayerIDs.includes(String(playerID)))
         ? player
         : { ...player, hand: [], stagingArea: [] };
   }

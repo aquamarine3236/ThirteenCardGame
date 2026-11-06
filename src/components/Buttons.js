@@ -44,7 +44,7 @@ export default class Buttons extends PureComponent {
         ""
       );
     return (
-      <div>
+      <div className="action-bar">
         <div className="center-container">
           <StagingAreaButtons
             currentPlayer={this.props.ctx.currentPlayer}

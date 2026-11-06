@@ -10,13 +10,14 @@ export default class GameArea extends Component {
   render() {
     const playerID = this.props.playerID;
     const pID = playerID ? parseInt(playerID) : 0;
+    const matchData = this.props.matchData || this.props.gameMetadata;
     let player;
     let playerName;
     let gameArea = [];
     let centerRow = [];
     const leadCandidate = this.props.G.pendingThreePairLeadPlayer;
     const leadPlayer = leadCandidate
-      ? _.find(this.props.gameMetadata, {
+      ? _.find(matchData, {
           id: parseInt(leadCandidate, 10),
         })
       : null;
@@ -28,7 +29,7 @@ export default class GameArea extends Component {
             {this.props.G.gameResults && (
               <ol>
                 {this.props.G.gameResults.rankings.map((playerID, rank) => {
-                  const metadata = _.find(this.props.gameMetadata, {
+                  const metadata = _.find(matchData, {
                     id: parseInt(playerID, 10),
                   });
                   const amount =
@@ -54,7 +55,7 @@ export default class GameArea extends Component {
                   <li key={result.handNumber}>
                     Ván {result.handNumber}:{" "}
                     {result.rankings.map((resultPlayerID, rank) => {
-                      const resultPlayer = _.find(this.props.gameMetadata, {
+                      const resultPlayer = _.find(matchData, {
                         id: parseInt(resultPlayerID, 10),
                       });
                       const amount = result.netBalances[resultPlayerID];
@@ -106,26 +107,28 @@ export default class GameArea extends Component {
           "player-status"
         );
         if (i === 2 || (i === 0 && !playerID)) {
-          player = _.find(this.props.gameMetadata, { id: index });
+          player = _.find(matchData, { id: index });
           playerName = player ? player.name : indexString;
           gameArea.push(
             <div className="center-container" key={indexString}>
               <PlayerStatus
                 playerName={playerName}
                 cardsLeft={this.props.G.cardsLeft[index]}
+                balance={this.props.G.netBalances[index]}
                 className={playerStatusClassName}
                 winner={this.props.G.winners.findIndex(x => x === indexString)}
               />
             </div>
           );
         } else if (i % 2 === 1) {
-          player = _.find(this.props.gameMetadata, { id: index });
+          player = _.find(matchData, { id: index });
           playerName = player ? player.name : indexString;
           centerRow.push(
             <div key={indexString}>
               <PlayerStatus
                 playerName={playerName}
                 cardsLeft={this.props.G.cardsLeft[index]}
+                balance={this.props.G.netBalances[index]}
                 className={playerStatusClassName}
                 winner={this.props.G.winners.findIndex(x => x === indexString)}
               />
@@ -150,5 +153,6 @@ GameArea.propTypes = {
   ctx: PropTypes.object,
   moves: PropTypes.object,
   playerID: PropTypes.string,
+  matchData: PropTypes.array,
   gameMetadata: PropTypes.array,
 };

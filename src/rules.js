@@ -11,11 +11,11 @@ export const DEFAULT_RULES = {
     fourKindCutRound: false,
     fourPairSingleTwo: false,
     fourPairPairTwo: true,
-    fourPairCutRound: false,
+    fourPairCutRound: true,
   },
   settlement: {
     mode: "winner-vs-others",
-    baseStake: 0,
+    baseStake: 1,
     rankPayouts: [3, 1, -1, -3],
     twoCardMultipliers: { S: 1, C: 2, D: 3, H: 4 },
   },
@@ -37,7 +37,7 @@ function hasExactKeys(value, keys) {
 }
 
 function isAmount(value) {
-  return Number.isSafeInteger(value) && value >= 0 && value <= 1000000;
+  return Number.isSafeInteger(value) && value >= 1 && value <= 1000000;
 }
 
 function isMultiplier(value) {

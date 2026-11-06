@@ -9,6 +9,9 @@ export default class PlayerStatus extends PureComponent {
       <div className={this.props.className}>
         {this.props.playerName}
         {winners(this.props.winner, this.props.cardsLeft)}
+        {this.props.balance !== undefined && (
+          <div className="player-balance">Chip: {this.props.balance}</div>
+        )}
       </div>
     );
   }
@@ -46,6 +49,7 @@ function winners(winner, cardsLeft) {
 PlayerStatus.propTypes = {
   playerName: PropTypes.string,
   cardsLeft: PropTypes.number,
+  balance: PropTypes.number,
   className: PropTypes.string,
   winner: PropTypes.number,
 };

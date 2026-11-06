@@ -1,127 +1,133 @@
-/*
- * Copyright 2018 The boardgame.io Authors.
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT.
- */
+@import "../styles/tokens";
 
-$cornsilk: #f7f3dc;
-$yellow: #f4d666;
-$orange: #f7b88b;
-$darkorange: #e8775a;
-$red: #bd4a39;
-$grey: #dbd8d5;
-$darkgrey: #a6a09f;
-$darkergrey: #615b5a;
-$shadow: rgba(0, 0, 0, 0.2);
+.app-shell {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: $space-2xl $space-lg;
+  color: $on-dark;
+}
 
-#lobby-view {
+.lobby-nav {
   display: flex;
-  flex-direction: column;
-  width: 90%;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  margin-bottom: $space-xl;
+  padding-bottom: $space-lg;
+  border-bottom: $border-thick $gold;
 }
 
-.phase-title {
-  padding-top: 1em;
-  font-weight: bold;
-  background-color: $orange;
-  margin-bottom: 0px;
-  padding-bottom: 1em;
-  box-shadow: 0.25em 0.25em 0.125em $shadow;
-  padding-left: 0.5em;
-  border-radius: 0.5em;
-  flex-basis: 0;
+.match-shell {
+  margin-top: $space-md;
 }
 
-#instances {
-  background-color: $orange;
-  border-radius: 0.5em;
-  position: relative;
-  top: -0.75em;
-  box-shadow: 0.25em 0.25em 0.125em $shadow;
+.match-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  margin-bottom: $space-sm;
+}
+
+.room-waiting {
+  @include sharp-panel;
+  margin-bottom: $space-md;
+  padding: $space-lg;
+  color: $ink;
+
+  h2 {
+    color: $burnt-red;
+  }
+
+  ul {
+    list-style: disc;
+    padding-left: $space-xl;
+  }
+}
+
+.create-room-button {
+  display: block;
+  width: 100%;
+  margin: $space-lg 0;
+  padding: $space-md;
+  font-size: 1.1em;
+}
+
+.room-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  align-items: center;
+}
+
+button.danger {
+  background-color: $burnt-red;
+  border-color: $gold;
+  color: $on-dark;
+
+  &:hover:not(:disabled) {
+    background-color: $amber;
+    color: $ink;
+  }
+}
+
+.custom-rules .red-suit,
+.room-list .red-suit {
+  color: $burnt-red;
+  font-weight: 700;
 }
 
 a {
-  color: black;
+  color: $ink;
   text-decoration: none;
-  font-size: 1.5em;
 }
 
 h1 {
-  color: $red;
+  font-family: $font-display;
+  color: $gold;
   font-variant: small-caps;
   text-align: center;
-  font-size: 2em;
-  text-shadow: 0.075em 0.075em 0.025em $shadow;
+  font-size: 2.25em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0 0 $space-lg;
+  text-shadow: none;
 }
 
 h2 {
-  color: $red;
-  text-shadow: 0.075em 0.075em 0.025em $shadow;
+  font-family: $font-display;
+  color: $gold;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-shadow: none;
+  margin-top: 0;
 }
 
 h3 {
-  color: $darkorange;
-  text-shadow: 0.05em 0.05em 0.025em $shadow;
+  font-family: $font-display;
+  color: $amber;
+  font-weight: 600;
+  text-shadow: none;
 }
 
 h4 {
-  color: $darkorange;
+  font-family: $font-display;
+  color: $amber;
+  font-weight: 600;
 }
 
 .hidden {
   display: none;
 }
 
-.phase {
-  border: none;
-  outline: none;
-}
-
-#game-creation select {
-  font-size: 14px;
-  margin-right: 10px;
-}
-
-#game-creation span {
-  margin-right: 10px;
-}
-
-#instances td {
-  list-style: none;
-  border: 0px solid #eee;
-  border-top: none;
-  height: 2em;
-  line-height: 2em;
-  text-align: left;
-  font-size: 12px;
-  padding-left: 0.8em;
-  padding-right: 0.8em;
-}
-
-#instances table {
-  height: 100%;
-  width: 100%;
-  white-space: nowrap;
-}
-
-#instances button {
-  font-size: 12px;
-}
-
 .error-msg {
-  font-size: 12px;
-  color: red;
-  margin-top: 0.8em;
+  font-size: 0.875em;
+  color: $surface;
+  background-color: $burnt-red;
+  border: $border-thick $gold;
+  border-radius: $radius;
+  margin-top: $space-md;
+  padding: $space-sm $space-md;
   display: block;
-  border-radius: 0.5em;
-}
-
-.buttons button {
-  margin-left: 10px;
-  margin-top: 10px;
-  width: 70px;
 }
 
 .custom-lobby {
@@ -137,28 +143,59 @@ h4 {
   flex-direction: column;
   gap: 0.35em;
   margin: 0.75em 0;
+  color: $ink;
 }
 
 .custom-rules,
 .room-list {
-  background: $cornsilk;
-  border-radius: 0.5em;
-  box-shadow: 0.25em 0.25em 0.125em $shadow;
-  margin-top: 1em;
-  padding: 1em;
+  @include sharp-panel;
+  color: $ink;
+  margin-top: $space-lg;
+  padding: $space-lg;
 }
 
 .custom-rules fieldset {
-  border: 1px solid $darkgrey;
-  border-radius: 0.4em;
-  margin: 1em 0;
+  border: $border-thin $olive;
+  border-radius: $radius;
+  margin: $space-lg 0;
+  padding: $space-md;
+}
+
+.opening-card-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+
+  button {
+    min-width: 3.5em;
+    margin: 0;
+    font-size: 1.1em;
+
+    &.selected {
+      background-color: $gold;
+      border-color: $burnt-red;
+    }
+
+    .red-suit {
+      color: $burnt-red;
+      font-weight: 700;
+    }
+  }
+}
+
+.custom-rules legend {
+  font-family: $font-display;
+  font-weight: 600;
+  color: $burnt-red;
+  padding: 0 $space-xs;
 }
 
 .custom-rules .check-rule {
   align-items: center;
   display: flex;
   flex-direction: row;
-  gap: 0.5em;
+  gap: $space-sm;
+  color: $ink;
 }
 
 .custom-rules input:not([type="checkbox"]),
@@ -166,28 +203,68 @@ h4 {
 .player-name input {
   box-sizing: border-box;
   max-width: 100%;
-  padding: 0.4em;
+  padding: $space-sm;
+  border: $border-thin $olive;
+  border-radius: $radius-input;
+  background-color: $surface;
+  color: $ink;
+  font-family: $font-body;
+  font-size: 1em;
+}
+
+.custom-rules input:not([type="checkbox"]):focus,
+.custom-rules select:focus,
+.player-name input:focus {
+  outline: none;
+  border-color: $gold;
+  border-width: 2px;
 }
 
 .custom-rules button,
 .room-list button {
   cursor: pointer;
-  padding: 0.5em 0.75em;
+  padding: $space-sm $space-md;
 }
 
 .room-list ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .room-list li {
   align-items: center;
-  border-bottom: 1px solid $grey;
+  border-bottom: $border-thin $olive;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75em;
+  gap: $space-md;
   justify-content: space-between;
-  padding: 0.75em 0;
+  padding: $space-md 0;
+  color: $ink;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.room-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-xs;
+  margin: 0;
+  padding: $space-md;
+  text-align: left;
+
+  &:disabled {
+    opacity: 0.75;
+  }
+}
+
+.room-card-action {
+  font-size: 0.85em;
+  font-weight: 400;
 }
 
 .game-results ol {
@@ -196,4 +273,98 @@ h4 {
 
 .game-results li {
   text-align: left;
+}
+
+.rules-page {
+  @include sharp-panel;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: $space-xl;
+  color: $ink;
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: $burnt-red;
+    text-align: left;
+  }
+
+  h1 {
+    text-align: center;
+    color: $burnt-red;
+    border-bottom: $border-thick $gold;
+    padding-bottom: $space-md;
+  }
+
+  h2 {
+    color: $olive;
+    margin-top: $space-xl;
+  }
+
+  h3,
+  h4 {
+    color: $amber;
+  }
+
+  p,
+  li {
+    color: $ink;
+    line-height: 1.55;
+  }
+
+  ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin: $space-sm 0 $space-lg;
+  }
+
+  em {
+    color: $burnt-red;
+    font-style: italic;
+  }
+}
+
+@media screen and (max-width: $bp-phone) {
+  .app-shell {
+    padding: $space-lg $space-md;
+  }
+
+  .lobby-nav {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
+  .custom-rules button,
+  .room-list button,
+  .match-toolbar button {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .room-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .room-list li {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rules-page {
+    padding: $space-lg;
+  }
+
+  h1 {
+    font-size: 1.75em;
+  }
 }

@@ -15,7 +15,10 @@ export function relocateCards(contextOrG, legacyContext, ...legacyArgs) {
     ctx.playerID === undefined ? ctx.currentPlayer : ctx.playerID;
   const player = G.players[playerID];
   if (
+    G.started === false ||
     G.pendingThreePairLeadPlayer ||
+    (Array.isArray(G.activePlayerIDs) &&
+      !G.activePlayerIDs.includes(String(playerID))) ||
     !player ||
     !Array.isArray(player.hand) ||
     !Array.isArray(player.stagingArea)
@@ -89,8 +92,16 @@ export function clearStagingArea(contextOrG, legacyContext) {
   const playerID =
     ctx.playerID === undefined ? ctx.currentPlayer : ctx.playerID;
   const player = G.players[playerID];
-  if (G.pendingThreePairLeadPlayer || !player) return INVALID_MOVE;
-  player.hand = player.hand.concat(player.stagingArea);
+  if (
+    G.started === false ||
+    G.pendingThreePairLeadPlayer ||
+    (Array.isArray(G.activePlayerIDs) &&
+      !G.activePlayerIDs.includes(String(playerID))) ||
+    !player
+  ) {
+    return INVALID_MOVE;
+  }
+  player.hand = player.hand.concat(player.stagingArea).sort(compareCards);
   player.stagingArea = [];
 }
 
@@ -99,6 +110,14 @@ export function sortStagingArea(contextOrG, legacyContext) {
   const playerID =
     ctx.playerID === undefined ? ctx.currentPlayer : ctx.playerID;
   const player = G.players[playerID];
-  if (G.pendingThreePairLeadPlayer || !player) return INVALID_MOVE;
+  if (
+    G.started === false ||
+    G.pendingThreePairLeadPlayer ||
+    (Array.isArray(G.activePlayerIDs) &&
+      !G.activePlayerIDs.includes(String(playerID))) ||
+    !player
+  ) {
+    return INVALID_MOVE;
+  }
   player.stagingArea.sort(compareCards);
 }

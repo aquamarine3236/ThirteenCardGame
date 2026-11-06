@@ -106,11 +106,19 @@ function makeDeckWithThreePairCandidates() {
 describe("custom rules", () => {
   it("uses the default opening card and rejects invalid settings", () => {
     expect(normalizeRules().openingCard).toEqual({ rank: "3", suit: "S" });
+    expect(normalizeRules().settlement.baseStake).toBe(1);
     expect(normalizeRules().chops.threePairSingleTwo).toBe(false);
     expect(normalizeRules().chops.threePairLead).toBe(true);
     expect(normalizeRules().chops.fourKindSingleTwo).toBe(true);
     expect(normalizeRules().chops.fourKindPairTwo).toBe(false);
     expect(normalizeRules().chops.fourPairPairTwo).toBe(true);
+    expect(normalizeRules().chops.fourPairCutRound).toBe(true);
+    expect(
+      normalizeRules({
+        ...DEFAULT_RULES,
+        chops: { ...DEFAULT_RULES.chops, fourPairCutRound: false },
+      }).chops.fourPairCutRound
+    ).toBe(false);
     expect(normalizeRules().settlement.twoCardMultipliers).toEqual({
       S: 1,
       C: 2,
@@ -131,6 +139,15 @@ describe("custom rules", () => {
         settlement: {
           ...DEFAULT_RULES.settlement,
           baseStake: -1,
+        },
+      })
+    ).toThrow("settlement");
+    expect(() =>
+      normalizeRules({
+        ...DEFAULT_RULES,
+        settlement: {
+          ...DEFAULT_RULES.settlement,
+          baseStake: 0,
         },
       })
     ).toThrow("settlement");

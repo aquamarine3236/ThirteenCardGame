@@ -14,7 +14,8 @@ export default class PlayerArea extends Component {
 
     if (playerID) {
       const winner = this.props.G.winners.findIndex(x => x === playerID);
-      const player = _.find(this.props.gameMetadata, {
+      const matchData = this.props.matchData || this.props.gameMetadata;
+      const player = _.find(matchData, {
         id: parseInt(playerID),
       });
       const playerName = player ? player.name : playerID;
@@ -23,6 +24,7 @@ export default class PlayerArea extends Component {
           <PlayerStatus
             playerName={playerName}
             cardsLeft={this.props.G.cardsLeft[playerID]}
+            balance={this.props.G.netBalances[playerID]}
             className={
               getClassName(this.props, playerID, "player-status") + " no-shadow"
             }
@@ -30,7 +32,13 @@ export default class PlayerArea extends Component {
           />
         </div>
       );
-      if (winner === -1 && !this.props.G.handComplete) {
+      if (!this.props.G.started) {
+        playerArea.push(
+          <div className="center-container" key="waiting">
+            Đang chờ chủ phòng bắt đầu ván.
+          </div>
+        );
+      } else if (winner === -1 && !this.props.G.handComplete) {
         const choosingLead =
           this.props.G.pendingThreePairLeadPlayer === playerID;
         if (choosingLead) {
@@ -61,6 +69,9 @@ export default class PlayerArea extends Component {
                 )}
                 listName="stagingArea"
                 cards={this.props.G.players[playerID].stagingArea}
+                onCardClick={card =>
+                  this.props.moves.relocateCards([card], "hand")
+                }
               />
             </div>
           );
@@ -76,6 +87,9 @@ export default class PlayerArea extends Component {
               className={getClassName(this.props, playerID, "hand")}
               listName="hand"
               cards={this.props.G.players[playerID].hand}
+              onCardClick={card =>
+                this.props.moves.relocateCards([card], "stagingArea")
+              }
             />
           </div>
         );
@@ -100,5 +114,6 @@ PlayerArea.propTypes = {
   ctx: PropTypes.object,
   moves: PropTypes.object,
   playerID: PropTypes.string,
+  matchData: PropTypes.array,
   gameMetadata: PropTypes.array,
 };

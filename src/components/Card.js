@@ -1,53 +1,43 @@
-// src/Card.js
-import React, { PureComponent } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-import { Draggable } from "react-beautiful-dnd";
 
-const requestImageFile = require.context("../assets/cards", true, /.svg$/);
-export default class Card extends PureComponent {
-  render() {
-    return (
-      <Draggable
-        draggableId={this.props.rank + this.props.suit}
-        index={this.props.index}
-        isDragDisabled={this.props.disabled}
-      >
-        {(provided, snapshot) => (
-          <li
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            style={getStyle(provided.draggableProps.style, snapshot)}
-          >
-            <img
-              className="card"
-              src={
-                requestImageFile(`./${this.props.rank + this.props.suit}.svg`)
-                  .default
-              }
-              alt={this.props.rank + this.props.suit}
-            />
-          </li>
-        )}
-      </Draggable>
-    );
-  }
+const requestImageFile = require.context("../assets/cards", false, /\.svg$/);
+
+function resolveCardSrc(rank, suit) {
+  const asset = requestImageFile(`./${rank}${suit}.svg`);
+  if (typeof asset === "string") return asset;
+  if (asset && typeof asset.default === "string") return asset.default;
+  if (asset && asset.default == null && asset) return asset;
+  return asset && asset.default;
 }
 
-function getStyle(style, snapshot) {
-  if (!snapshot.isDropAnimating) {
-    return style;
-  }
-  return {
-    ...style,
-    // cannot be 0, but make it super tiny
-    transitionDuration: `0.01s`,
-  };
+export default function Card({ rank, suit, disabled, selected, onClick }) {
+  const id = rank + suit;
+  return (
+    <li className={selected ? "selected-card" : ""}>
+      <button
+        type="button"
+        className="card-button"
+        onClick={onClick}
+        disabled={disabled || !onClick}
+        aria-label={`${selected ? "Bỏ chọn" : "Chọn"} lá ${id}`}
+        aria-pressed={Boolean(selected)}
+      >
+        <img
+          className="card"
+          src={resolveCardSrc(rank, suit)}
+          alt={id}
+          draggable={false}
+        />
+      </button>
+    </li>
+  );
 }
 
 Card.propTypes = {
-  rank: PropTypes.string,
-  suit: PropTypes.string,
+  rank: PropTypes.string.isRequired,
+  suit: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
-  index: PropTypes.number,
+  selected: PropTypes.bool,
+  onClick: PropTypes.func,
 };

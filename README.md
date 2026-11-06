@@ -1,51 +1,138 @@
-This is an online implementation of the popular Vietnamese card game Tiến Lên, featuring a multiplayer lobby, and a full English ruleset by the rules I learned to play with. You can try out the game at [tienlen-en.herokuapp.com](http://tienlen-en.herokuapp.com/). The rules can be found on the website or [here](https://github.com/nguyenank/tien-len/wiki/Rules).
+# Tiến Lên
 
-## Custom rules and scoring
+Ứng dụng chơi Tiến Lên trực tuyến nhiều người. Mỗi phòng có tối đa 4 chỗ,
+chủ phòng cấu hình luật trước khi tạo phòng, người chơi tham gia qua trình
+duyệt và đồng bộ ván qua máy chủ Socket.IO. Luật chi tiết nằm ngay trong ứng
+dụng tại đường dẫn `/rules`.
 
-The room creator can choose the opening 3, chop limits and cut-round rules,
-whether the smallest 3-pair combination may lead the next hand, and whether
-the player who starts with the 3♠ and finishes first earns a white win. Each
-2 has a configurable value in multiples of the stake (default: 2♠ = 1x,
-2♣ = 2x, 2♦ = 3x, 2♥ = 4x). Rules are validated by the server and remain fixed
-throughout the match.
+Ứng dụng hỗ trợ từ 2 đến 4 người. Mỗi người chỉ xem được bài của mình. Điểm
+cược và kết quả được ghi dưới dạng chip ảo; ứng dụng không nhận hay xử lý tiền
+thật.
 
-A match continues across hands. After each hand, placements, chops, and 2s
-left in a hand are settled into cumulative virtual balances. Placement
-settlement can either make first place win from the other three players, or
-use custom positive/negative multipliers for places 1–4 whose sum is zero.
-The room can then start another hand. This app tracks scores only and does not
-process real-money payments.
+## Luồng chơi
 
-![Image of Game in Progress](./public/game-preview.png)
+1. Nhập tên, tạo phòng và chọn luật; hoặc tham gia một phòng đang chờ.
+2. Chủ phòng bắt đầu khi đã có ít nhất 2 người. Phòng có tối đa 4 người.
+3. Mỗi người được chia 13 lá. Người giữ lá mở đầu đã chọn đi trước và phải
+   đánh lá đó trong lượt đầu tiên.
+4. Chọn lá để đưa vào khu vực bài chuẩn bị, sau đó đánh bài hoặc bỏ lượt theo
+   tình huống. Có thể sắp xếp hoặc đưa bài đã chọn trở lại tay.
+5. Khi một ván kết thúc, xem thứ hạng và biến động chip; người chơi có thể bắt
+   đầu ván tiếp theo. Điểm được cộng dồn trong cùng trận.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). This project uses the [boardgame.io](https://boardgame.io) framework. This project was initially created for HMC CSCI189, Fall 2020.
+Chủ phòng có quyền bắt đầu hoặc xóa phòng khi phòng còn chờ. Khi ván đã bắt
+đầu, quyền chơi như nhau giữa các người chơi. Bài được xáo và chia lại cho
+mỗi ván mới; người về nhất ván trước thường được mở ván sau, trừ khi luật
+3 đôi thông mở đầu được áp dụng.
 
-## Available Scripts
+## Luật và thiết lập phòng
 
-To run the project initially, run `npm install` to install all of the dependencies.
+### Thứ tự và tổ hợp bài
 
-In the project directory, you can run:
+- Giá trị lá tăng dần theo hạng `3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A, 2`.
+- Cùng hạng thì chất tăng dần: bích (♠), tép (♣), rô (♦), cơ (♥). Hạng được
+  so trước chất.
+- Tổ hợp thường gồm: bài lẻ, đôi, ba lá cùng hạng, sảnh từ 3 lá liên tiếp
+  (không có lá 2), 3 đôi thông, 4 đôi thông và tứ quý.
+- Để chặn, thông thường phải đánh tổ hợp cùng loại và cùng số lá, có lá cao
+  nhất lớn hơn. Chặt 2 là ngoại lệ và phụ thuộc các lựa chọn của phòng.
+- Người bỏ lượt không đánh lại trong vòng hiện tại, trừ khi một luật cắt vòng
+  được bật. Khi chỉ còn một người có thể đánh, người đó được quyền đi tiếp;
+  những người khác không thể chặn trong lúc này.
 
-### `npm start`
+### Các lựa chọn chủ phòng
 
-Runs the app in the development mode.<br /> Be sure to change `APP_PRODUCTION` to `false` in `src/config.js`. If you wish to experiment with the game, and not necessarily the Lobby, I would recommend setting `LOBBY` to `false` in `src/config.js,` which runs just the game with the boardgame.io debug panel.
+| Thiết lập | Mặc định | Tác dụng |
+|---|---|---|
+| Lá mở đầu | 3♠ | Chọn một trong bốn lá 3. Người giữ lá đó đi đầu và phải đánh nó ở lượt đầu ván đầu tiên. |
+| Thắng trắng 3♠ | Tắt | Nếu bật, người giữ 3♠ về nhất được tính thắng trắng; phần kết toán theo thứ hạng của ván đó được nhân đôi. |
+| 3 đôi thông chặt 2 | Tắt | Cho phép 3 đôi thông chặt một lá 2. |
+| 3 đôi thông mở đầu ván sau | Bật | Ở ván kế tiếp, người có bộ 3 đôi thông nhỏ nhất có thể chọn đánh bộ đó để mở đầu thay vì người về nhất ván trước. |
+| Tứ quý chặt 1 lá 2 | Bật | Cho phép tứ quý chặt một lá 2. |
+| Tứ quý chặt đôi 2 | Tắt | Cho phép tứ quý chặt đôi 2; lựa chọn này cũng cho phép chặt một lá 2. |
+| Tứ quý cắt vòng | Tắt | Khi tứ quý chặt 2, mở lại lượt cho những người đã bỏ lượt. |
+| 4 đôi thông chặt 1 lá 2 | Tắt | Cho phép 4 đôi thông chặt một lá 2. |
+| 4 đôi thông chặt đôi 2 | Bật | Cho phép 4 đôi thông chặt đôi 2; lựa chọn này cũng cho phép chặt một lá 2. |
+| 4 đôi thông cắt vòng | Bật | Khi 4 đôi thông chặt 2, mở lại lượt cho những người đã bỏ lượt. |
+| Tiền cược cơ sở | 1 | Mỗi người bắt đầu với 100 lần tiền cược cơ sở dưới dạng chip ảo. |
+| Cách tính thứ hạng | Nhất ăn những người còn lại | Người về nhất nhận một lần tiền cược từ mỗi người chơi khác. |
+| Giá trị từng lá 2 | 2♠: 1x, 2♣: 2x, 2♦: 3x, 2♥: 4x | Hệ số nhân với tiền cược cơ sở khi chặt 2 hoặc còn 2 trên tay lúc kết thúc. |
 
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Ở chế độ tùy chỉnh, chủ phòng đặt hệ số cho hạng 1–4. Các hệ số phải là số
+nguyên trong khoảng -1000 đến 1000 và có tổng bằng 0. Với phòng ít hơn 4
+người, các hệ số được cân bằng lại cho số người thực tế.
 
-You will also need to run `npm run-script server` to get the web server. By default, the web server is on port 8000. The game server and web server ports can be changed in `src/config.js`.
+Khi chặt 2, người chặt trả giá trị của lá 2 cho người đang giữ tổ hợp ở giữa;
+nếu chặt đôi 2 thì cộng giá trị của cả hai lá. Khi kết thúc ván, các lá 2 còn
+trên tay người chơi chưa về nhất được tính là thối và trả tổng giá trị cho
+người về nhất. Các khoản này được tính riêng với kết toán thứ hạng.
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+Thiết lập được máy chủ kiểm tra và giữ cố định trong trận. Chip chỉ là điểm
+trong ứng dụng, không phải tiền thật.
 
-### `npm test`
+## Chạy trên máy cá nhân
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Cần cài Node.js và npm. Cài thư viện:
 
-### `npm run-script lint` and `npm run-script format`
+```bash
+npm install
+```
 
-Lint and format code respectively.
+Chạy máy chủ API, đồng bộ ván và phục vụ bản giao diện đã build:
 
-## CREDIT
+```bash
+npm run build
+npm run server
+```
 
-The playing cards are by Adrian Kennard and can be found (and customised) [here](https://www.me.uk/cards/).
+Mở [http://localhost:8000](http://localhost:8000). Máy chủ mặc định dùng cổng
+`8000`.
+
+Khi phát triển giao diện, chạy máy chủ trong một terminal:
+
+```bash
+npm run server
+```
+
+và chạy máy chủ phát triển React trong terminal khác:
+
+```bash
+npm start
+```
+
+Mở [http://localhost:3000](http://localhost:3000). Trong môi trường phát
+triển, giao diện kết nối tới máy chủ tại `http://localhost:8000`.
+
+## Lệnh
+
+| Lệnh | Tác dụng |
+|---|---|
+| `npm start` | Chạy máy chủ phát triển React. |
+| `npm run server` | Chạy máy chủ boardgame.io và phục vụ thư mục `build/` nếu đã build. |
+| `npm run build` | Tạo bản giao diện production trong `build/`. |
+| `npm test` | Chạy bộ kiểm thử Jest. |
+| `npm run lint` | Kiểm tra lint và định dạng JavaScript. |
+| `npm run format` | Định dạng JavaScript. |
+
+## Triển khai
+
+Ứng dụng được phục vụ bởi một tiến trình Node.js: build giao diện rồi chạy
+`node server-loader.cjs` (lệnh tương đương là `npm run server`). `Procfile` đã
+có lệnh khởi chạy cho nền tảng hỗ trợ Procfile.
+
+| Biến môi trường | Mục đích |
+|---|---|
+| `PORT` | Cổng HTTP và Socket.IO; mặc định `8000`. |
+| `CORS_ORIGIN` | Danh sách origin bổ sung, phân cách bằng dấu phẩy, khi giao diện và API đặt ở hai host khác nhau. |
+| `REACT_APP_SERVER_URL` | URL máy chủ API khác, được đưa vào lúc build giao diện. Mặc định production dùng cùng origin. |
+
+Trạng thái phòng và ván hiện được lưu trong bộ nhớ của tiến trình. Khởi động
+lại máy chủ sẽ làm mất các phòng và điểm; chỉ chạy một instance nếu chưa bổ
+sung cơ chế lưu trữ/chia sẻ trạng thái. Khi dùng HTTPS, hãy phục vụ API và giao
+diện qua HTTPS cùng origin hoặc cấu hình đúng `CORS_ORIGIN` và
+`REACT_APP_SERVER_URL`.
+
+## Công nghệ và ghi công
+
+Dự án dùng React, Create React App và boardgame.io. Hình lá bài dựa trên bộ bài
+của Adrian Kennard: [me.uk/cards](https://www.me.uk/cards/).

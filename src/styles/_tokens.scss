@@ -1,0 +1,81 @@
+// Design tokens — Modern Classic / Minimalist flat palette
+
+$teal: #445a5a;
+$olive: #6f6f44;
+$burnt-red: #a84830;
+$amber: #c98b3f;
+$gold: #dfbc65;
+$surface: #e9e4d8;
+$ink: #1f2a2a;
+$muted: #8a8580;
+$passed: #6b6660;
+$passed-surface: #c4bfb5;
+$on-dark: #e9e4d8;
+
+$font-display: "Cormorant Garamond", "Times New Roman", serif;
+$font-body: "Source Sans 3", "Segoe UI", sans-serif;
+
+$space-xs: 0.25em;
+$space-sm: 0.5em;
+$space-md: 0.75em;
+$space-lg: 1em;
+$space-xl: 1.5em;
+$space-2xl: 2em;
+
+$border-thin: 1px solid;
+$border-thick: 2px solid;
+$radius: 0;
+$radius-input: 2px;
+
+$bp-tablet: 992px;
+$bp-phone: 600px;
+
+$card-h: 5.84375em;
+$card-w: 4.25em;
+$card-h-tablet: 4.125em;
+$card-w-tablet: 3em;
+$card-h-phone: 3.45em;
+$card-w-phone: 2.5em;
+
+@mixin sharp-panel {
+  border-radius: $radius;
+  border: $border-thick $gold;
+  background-color: $surface;
+  box-shadow: none;
+}
+
+@mixin card-area {
+  border-radius: $radius;
+  border: $border-thick $gold;
+  padding: $space-sm;
+  margin: $space-sm;
+  flex-wrap: nowrap;
+  display: flex;
+  overflow: auto;
+  box-shadow: none;
+}
+
+@mixin btn-base {
+  border-radius: $radius;
+  border: $border-thick $gold;
+  background-color: $surface;
+  color: $ink;
+  font-family: $font-body;
+  font-weight: 600;
+  font-variant: normal;
+  box-shadow: none;
+  cursor: pointer;
+  margin: $space-sm;
+  padding: $space-sm $space-md;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: $gold;
+    color: $ink;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}

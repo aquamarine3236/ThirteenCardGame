@@ -23,6 +23,10 @@ describe("setUp", () => {
     }
   });
 
+  it("should initialize each player's virtual balance to 100 times the stake", () => {
+    expect(G.netBalances).toEqual({ 0: 100, 1: 100, 2: 100, 3: 100 });
+  });
+
   it("should sort the cards in each hand by ascending rank then suit", () => {
     for (let player in G.players) {
       let hand = G.players[player].hand;
