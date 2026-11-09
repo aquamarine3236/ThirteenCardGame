@@ -696,7 +696,7 @@ describe("custom rules", () => {
       Die: () => 0,
       Shuffle: () => makeDeckWithThreePairCandidates(),
     };
-    startNextHand(G, { ...makeContext("2"), random });
+    startNextHand(G, { ...makeContext("2"), playerID: "0", random });
 
     expect(G.pendingThreePairLeadPlayer).toBe("0");
 
@@ -730,7 +730,7 @@ describe("custom rules", () => {
       Shuffle: () => makeDeckWithThreePairCandidates(),
     };
     const context = makeContext("2");
-    startNextHand(G, { ...context, random });
+    startNextHand(G, { ...context, playerID: "0", random });
     const leadContext = makeContext("0");
     declineThreePairLead(G, leadContext);
 

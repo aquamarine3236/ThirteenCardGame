@@ -83,12 +83,14 @@ export default class GameArea extends Component {
                 ))}
               </ol>
             </details>
-            <button
-              type="button"
-              onClick={() => this.props.moves.startNextHand()}
-            >
-              Bắt đầu ván tiếp theo
-            </button>
+            {String(playerID) === "0" && (
+              <button
+                type="button"
+                onClick={() => this.props.moves.startNextHand()}
+              >
+                Bắt đầu ván tiếp theo
+              </button>
+            )}
           </div>
         ) : (
           <div key="center" className="round-type">

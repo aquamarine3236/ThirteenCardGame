@@ -124,6 +124,35 @@ describe("game results", () => {
     expect(startNextHand).toHaveBeenCalledWith();
   });
 
+  it("does not show the next-hand button to non-host players", () => {
+    const component = new GameArea({
+      playerID: "1",
+      ctx: { currentPlayer: "0" },
+      moves: { startNextHand: jest.fn() },
+      matchData: [{ id: 0, name: "Mây" }],
+      G: {
+        handComplete: true,
+        gameResults: {
+          handNumber: 1,
+          rankings: [],
+          netBalances: {},
+          cumulativeBalances: {},
+          whiteWin: false,
+        },
+        handResults: [],
+        winners: [],
+        pendingThreePairLeadPlayer: null,
+        turnOrder: [0, null, null, null],
+        cardsLeft: { 0: 0 },
+        netBalances: { 0: 100 },
+      },
+    });
+
+    expect(
+      findElement(component.render(), element => element.type === "button")
+    ).toBeNull();
+  });
+
   it("renders each rank once in the final results list", () => {
     const markup = renderToStaticMarkup(
       <GameArea

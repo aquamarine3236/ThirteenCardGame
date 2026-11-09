@@ -248,7 +248,7 @@ describe("automatic white wins", () => {
     const context = makeContext("0");
     context.random = randomFor(makeWhiteHand("four-twos"));
 
-    startNextHand(G, context);
+    startNextHand(G, { ...context, playerID: "0" });
 
     expect(G.handNumber).toBe(2);
     expect(G.handComplete).toBe(true);
@@ -270,7 +270,7 @@ describe("automatic white wins", () => {
     const context = makeContext("2");
     context.random = randomFor(makeRegularHand());
 
-    startNextHand(G, context);
+    startNextHand(G, { ...context, playerID: "0" });
 
     expect(G.firstPlayer).toBe(0);
     expect(context.events.endTurn).toHaveBeenCalledWith({ next: "0" });
@@ -285,7 +285,7 @@ describe("automatic white wins", () => {
     const context = makeContext("2");
     context.random = randomFor(makeRegularHand());
 
-    startNextHand(G, context);
+    startNextHand(G, { ...context, playerID: "0" });
 
     expect(G.firstPlayer).toBe(2);
     expect(context.events.endTurn).toHaveBeenCalledWith({ next: "2" });

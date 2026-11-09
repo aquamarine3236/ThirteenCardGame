@@ -3,7 +3,7 @@ import { Combinations } from "../constants";
 import { dealHand } from "../dealHand";
 import TienLen, { playerView } from "../TienLen";
 import { clearStagingArea, relocateCards } from "../moves/cardAreaMoves";
-import { cardsToCenter } from "../moves/cardPlayMoves";
+import { cardsToCenter, startNextHand } from "../moves/cardPlayMoves";
 import { DEFAULT_RULES, normalizeRules } from "../rules";
 
 const deterministicRandom = {
@@ -90,6 +90,16 @@ describe("room participation and card selection", () => {
       true
     );
     expect(before.players["0"].stagingArea).toEqual([]);
+  });
+
+  it("rejects starting the next hand from a non-host player", () => {
+    const G = {
+      started: true,
+      handComplete: true,
+      previousWinner: "0",
+    };
+
+    expect(startNextHand(G, { playerID: "1" })).toBe(INVALID_MOVE);
   });
 
   it("exposes only the requesting player's hand and staging area", () => {

@@ -351,6 +351,7 @@ export function startNextHand(contextOrG, legacyContext) {
   const { G, ctx } = unpackMove(contextOrG, legacyContext);
   const random = ctx.random || (ctx.ctx && ctx.ctx.random);
   if (
+    String(ctx.playerID) !== "0" ||
     G.started === false ||
     !G.handComplete ||
     !G.previousWinner ||
